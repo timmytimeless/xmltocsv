@@ -1,0 +1,112 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
+using System.IO;
+using System.Text;
+
+namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
+{
+    public class XmlToCsvUsingDataSet : XmlToCsvStrategyBase, IDisposable
+    {
+        private readonly DataSet _xmlDataSet = new DataSet();
+        private string _csvDestinationFilePath;
+        private DataTable _workingTable;
+
+        public XmlToCsvUsingDataSet(string xmlSourceFilePath)
+        {
+            _xmlDataSet.ReadXml(xmlSourceFilePath);
+            
+            foreach (DataTable table in _xmlDataSet.Tables)
+            {
+                TableNameCollection.Add(table.TableName);
+            }
+        }
+
+        public override void ExportToCsv(string xmlTableName, string csvDestinationFilePath)
+        {
+            HeaderColumnNameCollection.Clear();
+
+            if (string.IsNullOrEmpty(xmlTableName))
+            {
+                throw new NotSupportedException("Table name for table to export is not specified");
+            }
+            _csvDestinationFilePath = csvDestinationFilePath;
+            _workingTable = _xmlDataSet.Tables[xmlTableName];
+            ColumnCount = _workingTable.Columns.Count;
+
+            foreach (DataColumn column in _workingTable.Columns)
+            {
+                HeaderColumnNameCollection.Add(column.Ordinal, column.ColumnName);
+            }
+
+            FileStream fs = new FileStream(_csvDestinationFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
+            StreamWriter sw = new StreamWriter(fs, Encoding.Unicode);
+
+            using (sw)
+            {
+                string headerLine = string.Empty;
+
+                foreach (KeyValuePair<int, string> pair in HeaderColumnNameCollection)
+                {
+                    headerLine += pair.Value + ",";
+                }
+
+                char[] charsToTrim = { ',' };
+                sw.WriteLine(headerLine.TrimEnd(charsToTrim));
+
+                foreach (DataRow row in _xmlDataSet.Tables[xmlTableName].Rows)
+                {
+                    int colNr = 0;
+
+                    string rowValue = string.Empty;
+
+                    foreach (DataColumn column in _xmlDataSet.Tables[xmlTableName].Columns)
+                    {
+                        bool isString = (column.DataType == typeof(string));
+                        string columnValue;
+
+                        if (isString)
+                        {
+                            string stringValue = row[column].ToString();
+                            stringValue = stringValue.Replace(Environment.NewLine, @"\n");
+                            columnValue = "\"" + stringValue + "\"";
+                        }
+                        else
+                        {
+                            columnValue = row[column].ToString();
+                        }
+
+                        rowValue += columnValue;
+
+                        if (colNr < ColumnCount - 1)
+                        {
+                            rowValue += ",";
+                        }
+
+                        colNr++;
+                    }
+
+                    sw.WriteLine(rowValue);
+                }
+
+                sw.Flush();
+                sw.Close();
+            }
+        }
+
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _xmlDataSet.Dispose();
+            }
+        }
+    }
+}
