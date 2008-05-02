@@ -38,6 +38,8 @@
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.butSaveCsv = new System.Windows.Forms.Button();
             this.txbFilePath = new System.Windows.Forms.TextBox();
+            this.ddlEncoding = new System.Windows.Forms.ComboBox();
+            this.label1 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // butSelectFolder
@@ -56,7 +58,7 @@
             this.chbSaveAllTables.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.chbSaveAllTables.AutoSize = true;
             this.chbSaveAllTables.Enabled = false;
-            this.chbSaveAllTables.Location = new System.Drawing.Point(240, 163);
+            this.chbSaveAllTables.Location = new System.Drawing.Point(240, 162);
             this.chbSaveAllTables.Name = "chbSaveAllTables";
             this.chbSaveAllTables.Size = new System.Drawing.Size(129, 17);
             this.chbSaveAllTables.TabIndex = 14;
@@ -119,11 +121,32 @@
             this.txbFilePath.Size = new System.Drawing.Size(372, 20);
             this.txbFilePath.TabIndex = 12;
             // 
+            // ddlEncoding
+            // 
+            this.ddlEncoding.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.ddlEncoding.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.ddlEncoding.FormattingEnabled = true;
+            this.ddlEncoding.Location = new System.Drawing.Point(240, 131);
+            this.ddlEncoding.Name = "ddlEncoding";
+            this.ddlEncoding.Size = new System.Drawing.Size(131, 21);
+            this.ddlEncoding.TabIndex = 17;
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(242, 112);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(52, 13);
+            this.label1.TabIndex = 18;
+            this.label1.Text = "Encoding";
+            // 
             // ExportTool
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(372, 514);
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.ddlEncoding);
             this.Controls.Add(this.butSelectFolder);
             this.Controls.Add(this.chbSaveAllTables);
             this.Controls.Add(this.butSelectXml);
@@ -151,5 +174,7 @@
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
         private System.Windows.Forms.Button butSaveCsv;
         private System.Windows.Forms.TextBox txbFilePath;
+        private System.Windows.Forms.ComboBox ddlEncoding;
+        private System.Windows.Forms.Label label1;
     }
 }

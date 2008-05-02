@@ -1,5 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Data;
+using System.IO;
+using System.Text;
 
 namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
 {
@@ -15,7 +18,7 @@ namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
         public Collection<string> TableNameCollection { get; private set; }
         public int ColumnCount { get; set; }
 
-        public abstract void ExportToCsv(string xmlTableName, string csvDestinationFilePath);
+        public abstract void ExportToCsv(string xmlTableName, string csvDestinationFilePath, Encoding encoding);
 
         protected static string CreateCsvRowHeader(Dictionary<int, string> headerColumnNames)
         {

@@ -1,4 +1,6 @@
-﻿namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
+﻿using System.Text;
+
+namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
 {
     public class XmlToCsvContext
     {
@@ -14,9 +16,9 @@
             _strategy = strategy;
         }
 
-        public void Execute(string xmlTableName, string csvDestinationFilePath)
+        public void Execute(string xmlTableName, string csvDestinationFilePath, Encoding encoding)
         {
-            _strategy.ExportToCsv(xmlTableName, csvDestinationFilePath);
+            _strategy.ExportToCsv(xmlTableName, csvDestinationFilePath, encoding);
         }
     }
 }

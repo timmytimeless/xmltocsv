@@ -22,14 +22,33 @@ namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
             }
         }
 
-        public override void ExportToCsv(string xmlTableName, string csvDestinationFilePath)
+        public override void ExportToCsv(string xmlTableName, string csvDestinationFilePath, Encoding encoding)
         {
-            HeaderColumnNameCollection.Clear();
+            StreamWriter sw = CreateStreamWriter(xmlTableName, csvDestinationFilePath, encoding);
 
+            using (sw)
+            {
+                WriteHeaderToCsv(sw);
+
+                foreach (DataRow row in _xmlDataSet.Tables[xmlTableName].Rows)
+                {
+                    WriteRowToCsv(xmlTableName, sw, row);
+                }
+
+                sw.Flush();
+                sw.Close();
+            }
+        }
+
+        private StreamWriter CreateStreamWriter(string xmlTableName, string csvDestinationFilePath, Encoding encoding)
+        {
             if (string.IsNullOrEmpty(xmlTableName))
             {
                 throw new NotSupportedException("Table name for table to export is not specified");
             }
+
+            HeaderColumnNameCollection.Clear();
+
             _csvDestinationFilePath = csvDestinationFilePath;
             _workingTable = _xmlDataSet.Tables[xmlTableName];
             ColumnCount = _workingTable.Columns.Count;
@@ -40,60 +59,57 @@ namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
             }
 
             FileStream fs = new FileStream(_csvDestinationFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
-            StreamWriter sw = new StreamWriter(fs, Encoding.Unicode);
-
-            using (sw)
-            {
-                string headerLine = string.Empty;
-
-                foreach (KeyValuePair<int, string> pair in HeaderColumnNameCollection)
-                {
-                    headerLine += pair.Value + ",";
-                }
-
-                char[] charsToTrim = { ',' };
-                sw.WriteLine(headerLine.TrimEnd(charsToTrim));
-
-                foreach (DataRow row in _xmlDataSet.Tables[xmlTableName].Rows)
-                {
-                    int colNr = 0;
-
-                    string rowValue = string.Empty;
-
-                    foreach (DataColumn column in _xmlDataSet.Tables[xmlTableName].Columns)
-                    {
-                        bool isString = (column.DataType == typeof(string));
-                        string columnValue;
-
-                        if (isString)
-                        {
-                            string stringValue = row[column].ToString();
-                            stringValue = stringValue.Replace(Environment.NewLine, @"\n");
-                            columnValue = "\"" + stringValue + "\"";
-                        }
-                        else
-                        {
-                            columnValue = row[column].ToString();
-                        }
-
-                        rowValue += columnValue;
-
-                        if (colNr < ColumnCount - 1)
-                        {
-                            rowValue += ",";
-                        }
-
-                        colNr++;
-                    }
-
-                    sw.WriteLine(rowValue);
-                }
-
-                sw.Flush();
-                sw.Close();
-            }
+            StreamWriter sw = new StreamWriter(fs, encoding);
+            return sw;
         }
 
+        private void WriteRowToCsv(string xmlTableName, StreamWriter sw, DataRow row)
+        {
+            int colNr = 0;
+
+            string rowValue = string.Empty;
+
+            foreach (DataColumn column in _xmlDataSet.Tables[xmlTableName].Columns)
+            {
+                bool isString = (column.DataType == typeof(string));
+                string columnValue;
+
+                if (isString)
+                {
+                    string stringValue = row[column].ToString();
+                    stringValue = stringValue.Replace(Environment.NewLine, @"\n");
+                    columnValue = "\"" + stringValue + "\"";
+                }
+                else
+                {
+                    columnValue = row[column].ToString();
+                }
+
+                rowValue += columnValue;
+
+                if (colNr < ColumnCount - 1)
+                {
+                    rowValue += ",";
+                }
+
+                colNr++;
+            }
+
+            sw.WriteLine(rowValue);
+        }
+
+        private void WriteHeaderToCsv(StreamWriter sw)
+        {
+            string headerLine = string.Empty;
+
+            foreach (KeyValuePair<int, string> pair in HeaderColumnNameCollection)
+            {
+                headerLine += pair.Value + ",";
+            }
+
+            char[] charsToTrim = { ',' };
+            sw.WriteLine(headerLine.TrimEnd(charsToTrim));
+        }
 
         public void Dispose()
         {

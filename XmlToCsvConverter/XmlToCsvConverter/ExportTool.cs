@@ -29,13 +29,19 @@ namespace Moor.XmlToCsvConverter
             butSaveCsv.Click += butSaveCsv_Click;
             txbFilePath.TextChanged += txbFilePath_TextChanged;
             butSelectXml.Click += butSelectXml_Click;
+            Load += ExportTool_Load;
+        }
+
+        void ExportTool_Load(object sender, EventArgs e)
+        {
+            PopulateEncodingOptions();
         }
 
         private void saveFileDialog1_FileOk(object sender, CancelEventArgs e)
         {
             try
             {
-                _xmlToCsvContext.Execute(@lsbTables.SelectedItem.ToString(), @saveFileDialog1.FileName);
+                _xmlToCsvContext.Execute(@lsbTables.SelectedItem.ToString(), @saveFileDialog1.FileName, ((KeyValuePair<string, Encoding>)ddlEncoding.SelectedItem).Value);
                 txbLog.Text += "Saving  '" + lsbTables.SelectedItem + "' to CSV completed." + Environment.NewLine;
             }
             catch (NullReferenceException)
@@ -121,7 +127,7 @@ namespace Moor.XmlToCsvConverter
                 {
                     foreach (string tableName in lsbTables.Items)
                     {
-                        _xmlToCsvContext.Execute(tableName, folderBrowserDialog1.SelectedPath + @"\\" + tableName + ".csv");
+                        _xmlToCsvContext.Execute(tableName, folderBrowserDialog1.SelectedPath + @"\\" + tableName + ".csv", ((KeyValuePair<string, Encoding>)ddlEncoding.SelectedItem).Value);
                         txbLog.Text += "Saving  '" + tableName + "' to CSV completed." + Environment.NewLine;
                         txbLog.Refresh();
                     }
@@ -146,6 +152,28 @@ namespace Moor.XmlToCsvConverter
             {
                 txbLog.Text += "Destination folder for saving all tables: " + Environment.NewLine + folderBrowserDialog1.SelectedPath + Environment.NewLine;
             }
+        }
+
+        private void PopulateEncodingOptions()
+        {
+            ddlEncoding.DisplayMember = "Key";
+
+            Dictionary<string, Encoding> dic = new Dictionary<string, Encoding>();
+
+            dic.Add("Default", Encoding.Default);
+            dic.Add("ASCII", Encoding.ASCII);
+            dic.Add("Unicode", Encoding.Unicode);
+            dic.Add("UTF8", Encoding.UTF8);
+            dic.Add("UTF32", Encoding.UTF32);
+            dic.Add("BigEndianUnicode", Encoding.BigEndianUnicode);
+
+
+            foreach (KeyValuePair<string, Encoding> pair in dic)
+            {
+                ddlEncoding.Items.Add(pair);
+            }
+ 
+            ddlEncoding.SelectedIndex = 0;
         }
     }
 }
