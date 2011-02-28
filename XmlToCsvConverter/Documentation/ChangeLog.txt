@@ -1,4 +1,3 @@
 -Convert Solution from VS2008 to VS2010
 -Change Unit Test Framework from NUnit to MSTest
--Added a screen that visualizes the XML file to convert to CSV
--Code Cleanup (namely remove unused namespaces)
+-Code Cleanup (mostly removal of unused namespaces and code readability improvements)
