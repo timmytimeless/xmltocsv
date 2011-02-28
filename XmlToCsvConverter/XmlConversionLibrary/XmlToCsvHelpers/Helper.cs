@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Xml;
 using System.Xml.Linq;
 
@@ -13,7 +10,7 @@ namespace Moor.XmlConversionLibrary.XmlToCsvHelpers
         {
             while (reader.ReadToFollowing(tableName))
             {
-                XElement el = (XElement)XElement.ReadFrom(reader);
+                var el = (XElement)XNode.ReadFrom(reader);
                 yield return el;
             }
         }

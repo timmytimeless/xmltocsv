@@ -67,9 +67,9 @@
             // 
             // txbLog
             // 
-            this.txbLog.BackColor = System.Drawing.SystemColors.ActiveCaption;
             this.txbLog.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.txbLog.ForeColor = System.Drawing.Color.White;
+            this.txbLog.Font = new System.Drawing.Font("Courier New", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txbLog.ForeColor = System.Drawing.Color.Black;
             this.txbLog.Location = new System.Drawing.Point(0, 267);
             this.txbLog.Multiline = true;
             this.txbLog.Name = "txbLog";
@@ -94,7 +94,7 @@
             this.lsbTables.FormattingEnabled = true;
             this.lsbTables.Location = new System.Drawing.Point(0, 0);
             this.lsbTables.Name = "lsbTables";
-            this.lsbTables.Size = new System.Drawing.Size(235, 238);
+            this.lsbTables.Size = new System.Drawing.Size(235, 247);
             this.lsbTables.TabIndex = 10;
             // 
             // openFileDialog1

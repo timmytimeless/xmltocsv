@@ -58,8 +58,8 @@ namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
                 HeaderColumnNameCollection.Add(column.Ordinal, column.ColumnName);
             }
 
-            FileStream fs = new FileStream(_csvDestinationFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
-            StreamWriter sw = new StreamWriter(fs, encoding);
+            var fs = new FileStream(_csvDestinationFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
+            var sw = new StreamWriter(fs, encoding);
             return sw;
         }
 

@@ -19,7 +19,7 @@ namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
         {
             _xmlSourceFilePath = @xmlSourceFilePath;
 
-            DataSet ds = new DataSet("idpoorDataSet");
+            var ds = new DataSet("ds");
             ds.ReadXmlSchema(@_xmlSourceFilePath);
 
             foreach (DataTable table in ds.Tables)
@@ -38,18 +38,17 @@ namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
 
             using (XmlReader reader = XmlReader.Create(_xmlSourceFilePath))
             {
-                IEnumerable<XElement> _workingTable =
+                IEnumerable<XElement> workingTable =
                     from el in reader.StreamElements(xmlTableName).DescendantsAndSelf()
                     where el.Descendants().Count() > 0
                     select el;
 
-                IEnumerable<XElement> list = _workingTable.ToList();
+                IEnumerable<XElement> list = workingTable.ToList();
 
-                FileStream fs = new FileStream(_csvDestinationFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
-                StreamWriter sw = new StreamWriter(fs, Encoding.Unicode);
+                var fs = new FileStream(_csvDestinationFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
+                var sw = new StreamWriter(fs, Encoding.Unicode);
 
                 string headerLine = string.Empty;
-                IEnumerable<XElement> data = list;
 
                 foreach (XElement x in list.Take(1).Descendants())
                 {
@@ -84,19 +83,6 @@ namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
 
                 reader.Close();
             }
-
-            //DataSet ds = new DataSet("idpoorDataSet");
-            //ds.ReadXml(@_xmlSourceFilePath);
-
-            //DataRow row = ds.Tables["DataCollectionRound"].Rows[0];
-
-            //foreach (DataColumn col in row.Table.Columns)
-            //{
-            //    Console.WriteLine(col.ColumnName);
-            //}
-
         }
-
-
     }
 }

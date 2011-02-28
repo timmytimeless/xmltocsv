@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
@@ -21,49 +17,55 @@ namespace Moor.XmlToCsvConverter
         {
             InitializeComponent();
 
-            openFileDialog1.FileOk += openFileDialog1_FileOk;
-            saveFileDialog1.FileOk += saveFileDialog1_FileOk;
+            openFileDialog1.FileOk += OpenFileDialog1FileOk;
+            saveFileDialog1.FileOk += SaveFileDialog1FileOk;
 
-            butSelectFolder.Click += butSelectFolder_Click;
-            chbSaveAllTables.CheckedChanged += chbSaveAllTables_CheckedChanged;
-            butSaveCsv.Click += butSaveCsv_Click;
-            txbFilePath.TextChanged += txbFilePath_TextChanged;
-            butSelectXml.Click += butSelectXml_Click;
+            butSelectFolder.Click += ButSelectFolderClick;
+            chbSaveAllTables.CheckedChanged += ChbSaveAllTablesCheckedChanged;
+            butSaveCsv.Click += ButSaveCsvClick;
+            txbFilePath.TextChanged += TxbFilePathTextChanged;
+            butSelectXml.Click += ButSelectXmlClick;
             Load += ExportTool_Load;
         }
 
-        void ExportTool_Load(object sender, EventArgs e)
+        private void ExportTool_Load(object sender, EventArgs e)
         {
             PopulateEncodingOptions();
         }
 
-        private void saveFileDialog1_FileOk(object sender, CancelEventArgs e)
+        private void SaveFileDialog1FileOk(object sender, CancelEventArgs e)
         {
             try
             {
-                _xmlToCsvContext.Execute(@lsbTables.SelectedItem.ToString(), @saveFileDialog1.FileName, ((KeyValuePair<string, Encoding>)ddlEncoding.SelectedItem).Value);
-                txbLog.Text += "Saving  '" + lsbTables.SelectedItem + "' to CSV completed." + Environment.NewLine;
+                _xmlToCsvContext.Execute(@lsbTables.SelectedItem.ToString(), @saveFileDialog1.FileName,
+                                         ((KeyValuePair<string, Encoding>) ddlEncoding.SelectedItem).Value);
+                txbLog.Text += @"Saving  '" + lsbTables.SelectedItem + @"' to CSV completed." + Environment.NewLine;
             }
             catch (NullReferenceException)
             {
-                MessageBox.Show(this, "No table was selected. Please select a table.", "No table selected error.", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                txbLog.Text += "No table was selected. Please select a table." + Environment.NewLine;
+                MessageBox.Show(this, @"No table was selected. Please select a table.", @"No table selected error.",
+                                MessageBoxButtons.OK, MessageBoxIcon.Error);
+                txbLog.Text += @"No table was selected. Please select a table." + Environment.NewLine;
             }
         }
 
-        private void openFileDialog1_FileOk(object sender, CancelEventArgs e)
+        private void OpenFileDialog1FileOk(object sender, CancelEventArgs e)
         {
             lsbTables.Items.Clear();
 
             try
             {
-                Thread backgroundThread = new Thread(OpenXmlFile);
+                var backgroundThread = new Thread(OpenXmlFile);
                 backgroundThread.Start();
             }
             catch (XmlException)
             {
-                DialogResult result = MessageBox.Show(this, "Invalid XML file. Please make sure the XML file is XML-compliant.", "Invalid XML error", MessageBoxButtons.RetryCancel, MessageBoxIcon.Error);
-                txbLog.Text += "Invalid XML file. Please make sure the XML file is XML-compliant. Opening file '" + openFileDialog1.FileName + "' did not complete." + Environment.NewLine;
+                DialogResult result = MessageBox.Show(this,
+                                                      @"Invalid XML file. Please make sure the XML file is XML-compliant.",
+                                                      @"Invalid XML error", MessageBoxButtons.RetryCancel,
+                                                      MessageBoxIcon.Error);
+                txbLog.Text += @"Invalid XML file. Please make sure the XML file is XML-compliant. Opening file '" +
+                               openFileDialog1.FileName + @"' did not complete." + Environment.NewLine;
 
                 if (result == DialogResult.Retry)
                 {
@@ -77,102 +79,108 @@ namespace Moor.XmlToCsvConverter
             _xmlToCsvContext = new XmlToCsvContext(new XmlToCsvUsingDataSet(openFileDialog1.FileName));
             txbFilePath.Text = openFileDialog1.FileName;
 
-            txbLog.Text += "Opening file '" + openFileDialog1.FileName + "' completed." + Environment.NewLine;
+            txbLog.Text += @"Opening file '" + openFileDialog1.FileName + @"' completed." + Environment.NewLine;
 
-            foreach (var item in _xmlToCsvContext.Strategy.TableNameCollection)
+            foreach (string item in _xmlToCsvContext.Strategy.TableNameCollection)
             {
                 lsbTables.Items.Add(item);
             }
         }
 
-        private void butSelectXml_Click(object sender, EventArgs e)
+        private void ButSelectXmlClick(object sender, EventArgs e)
         {
-            txbLog.Text += "Opening file..." + Environment.NewLine;
+            txbLog.Text += @"Opening file..." + Environment.NewLine;
             DialogResult result = openFileDialog1.ShowDialog(this);
 
             if (result == DialogResult.Cancel)
             {
-                txbLog.Text += "Opening file cancelled by user." + Environment.NewLine;
+                txbLog.Text += @"Opening file cancelled by user." + Environment.NewLine;
             }
         }
 
-        private void txbFilePath_TextChanged(object sender, EventArgs e)
+        private void TxbFilePathTextChanged(object sender, EventArgs e)
         {
             butSaveCsv.Enabled = !string.IsNullOrEmpty(txbFilePath.Text);
             chbSaveAllTables.Enabled = true;
         }
 
-        private void butSaveCsv_Click(object sender, EventArgs e)
+        private void ButSaveCsvClick(object sender, EventArgs e)
         {
-            txbLog.Text += "Starting XML to CSV conversion:" + Environment.NewLine;
+            txbLog.Text += @"Starting XML to CSV conversion:" + Environment.NewLine;
 
             if (!chbSaveAllTables.Checked)
             {
-                txbLog.Text += "Convert single XML table" + Environment.NewLine;
+                txbLog.Text += @"Convert single XML table" + Environment.NewLine;
                 saveFileDialog1.AddExtension = true;
                 saveFileDialog1.DefaultExt = "csv";
-                saveFileDialog1.Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*";
+                saveFileDialog1.Filter = @"CSV files (*.csv)|*.csv|All files (*.*)|*.*";
                 saveFileDialog1.ShowDialog(this);
             }
             else
             {
                 if (string.IsNullOrEmpty(folderBrowserDialog1.SelectedPath))
                 {
-                    MessageBox.Show(this, "No destination folder selected. Please select a destination folder.",
-                                    "No destination folder selected", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    txbLog.Text += "No destination folder selected. Please select a destination folder." +
+                    MessageBox.Show(this, @"No destination folder selected. Please select a destination folder.",
+                                    @"No destination folder selected", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    txbLog.Text += @"No destination folder selected. Please select a destination folder." +
                                    Environment.NewLine;
                 }
                 else
                 {
                     foreach (string tableName in lsbTables.Items)
                     {
-                        _xmlToCsvContext.Execute(tableName, folderBrowserDialog1.SelectedPath + @"\\" + tableName + ".csv", ((KeyValuePair<string, Encoding>)ddlEncoding.SelectedItem).Value);
-                        txbLog.Text += "Saving  '" + tableName + "' to CSV completed." + Environment.NewLine;
+                        _xmlToCsvContext.Execute(tableName,
+                                                 folderBrowserDialog1.SelectedPath + @"\\" + tableName + ".csv",
+                                                 ((KeyValuePair<string, Encoding>) ddlEncoding.SelectedItem).Value);
+                        txbLog.Text += @"Saving  '" + tableName + @"' to CSV completed." + Environment.NewLine;
                         txbLog.Refresh();
                     }
 
-                    MessageBox.Show("Saving all tables completed succesfully.");
+                    MessageBox.Show(@"Saving all tables completed succesfully.");
                 }
             }
         }
 
-        private void chbSaveAllTables_CheckedChanged(object sender, EventArgs e)
+        private void ChbSaveAllTablesCheckedChanged(object sender, EventArgs e)
         {
             lsbTables.Enabled = !chbSaveAllTables.Checked;
             butSelectFolder.Enabled = chbSaveAllTables.Checked;
+            butSaveCsv.Enabled = !chbSaveAllTables.Checked;
         }
 
-        private void butSelectFolder_Click(object sender, EventArgs e)
+        private void ButSelectFolderClick(object sender, EventArgs e)
         {
-
             DialogResult result = folderBrowserDialog1.ShowDialog(this);
 
             if (result == DialogResult.OK)
             {
-                txbLog.Text += "Destination folder for saving all tables: " + Environment.NewLine + folderBrowserDialog1.SelectedPath + Environment.NewLine;
+                txbLog.Text += @"Destination folder for saving all tables: " + Environment.NewLine +
+                               folderBrowserDialog1.SelectedPath + Environment.NewLine;
             }
+
+            ButSaveCsvClick(sender, e);
         }
 
         private void PopulateEncodingOptions()
         {
             ddlEncoding.DisplayMember = "Key";
 
-            Dictionary<string, Encoding> dic = new Dictionary<string, Encoding>();
+            var dic = new Dictionary<string, Encoding>
+                          {
+                              {"Default", Encoding.Default},
+                              {"ASCII", Encoding.ASCII},
+                              {"Unicode", Encoding.Unicode},
+                              {"UTF8", Encoding.UTF8},
+                              {"UTF32", Encoding.UTF32},
+                              {"BigEndianUnicode", Encoding.BigEndianUnicode}
+                          };
 
-            dic.Add("Default", Encoding.Default);
-            dic.Add("ASCII", Encoding.ASCII);
-            dic.Add("Unicode", Encoding.Unicode);
-            dic.Add("UTF8", Encoding.UTF8);
-            dic.Add("UTF32", Encoding.UTF32);
-            dic.Add("BigEndianUnicode", Encoding.BigEndianUnicode);
 
-
-            foreach (KeyValuePair<string, Encoding> pair in dic)
+            foreach (var pair in dic)
             {
                 ddlEncoding.Items.Add(pair);
             }
- 
+
             ddlEncoding.SelectedIndex = 0;
         }
     }

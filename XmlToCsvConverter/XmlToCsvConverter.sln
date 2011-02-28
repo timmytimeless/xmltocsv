@@ -1,15 +1,29 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XmlToCsvConverter", "XmlToCsvConverter\XmlToCsvConverter.csproj", "{E65660A6-FF3A-4C79-B202-71C6DD9ED9B7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XmlConversionLibrary", "XmlConversionLibrary\XmlConversionLibrary.csproj", "{E7E0B0F3-C4E0-4633-9F81-F998933E6832}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{10DF90C6-1A45-4899-A65C-36D45FD38DCF}"
+	ProjectSection(SolutionItems) = preProject
+		Documentation\ChangeLog.txt = Documentation\ChangeLog.txt
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XmlToCsvTests", "XmlToCsvTests\XmlToCsvTests.csproj", "{267BEC3F-6071-4D3E-AB7A-501708B35A48}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{286280FF-5CBC-4043-A845-F3611FF9009E}"
+	ProjectSection(SolutionItems) = preProject
+		Local.testsettings = Local.testsettings
+		TraceAndTestImpact.testsettings = TraceAndTestImpact.testsettings
+		XmlToCsvConverter.vsmdi = XmlToCsvConverter.vsmdi
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 3
+		SccNumberOfProjects = 4
 		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = https://tfs06.codeplex.com/
+		SccTeamFoundationServer = https://tfs.codeplex.com/tfs/tfs06
 		SccLocalPath0 = .
 		SccProjectUniqueName1 = XmlConversionLibrary\\XmlConversionLibrary.csproj
 		SccProjectName1 = XmlConversionLibrary
@@ -17,6 +31,12 @@ Global
 		SccProjectUniqueName2 = XmlToCsvConverter\\XmlToCsvConverter.csproj
 		SccProjectName2 = XmlToCsvConverter
 		SccLocalPath2 = XmlToCsvConverter
+		SccProjectUniqueName3 = XmlToCsvTests\\XmlToCsvTests.csproj
+		SccProjectName3 = XmlToCsvTests
+		SccLocalPath3 = XmlToCsvTests
+	EndGlobalSection
+	GlobalSection(TestCaseManagementSettings) = postSolution
+		CategoryFile = XmlToCsvConverter.vsmdi
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,6 +51,10 @@ Global
 		{E7E0B0F3-C4E0-4633-9F81-F998933E6832}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E7E0B0F3-C4E0-4633-9F81-F998933E6832}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E7E0B0F3-C4E0-4633-9F81-F998933E6832}.Release|Any CPU.Build.0 = Release|Any CPU
+		{267BEC3F-6071-4D3E-AB7A-501708B35A48}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{267BEC3F-6071-4D3E-AB7A-501708B35A48}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{267BEC3F-6071-4D3E-AB7A-501708B35A48}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{267BEC3F-6071-4D3E-AB7A-501708B35A48}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
