@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml;
 using Moor.XmlConversionLibrary.XmlToCsvStrategy;
@@ -53,12 +54,13 @@ namespace Moor.XmlToCsvConverter
         {
             lsbTables.Items.Clear();
 
+            var taskA = Task.Factory.StartNew(() => OpenXmlFile(e));
+
             try
             {
-                var backgroundThread = new Thread(OpenXmlFile);
-                backgroundThread.Start();
+                taskA.Wait();
             }
-            catch (XmlException)
+            catch (XmlException ex)
             {
                 DialogResult result = MessageBox.Show(this,
                                                       @"Invalid XML file. Please make sure the XML file is XML-compliant.",
@@ -74,17 +76,51 @@ namespace Moor.XmlToCsvConverter
             }
         }
 
-        private void OpenXmlFile()
+        private void OpenXmlFile(CancelEventArgs e)
         {
-            _xmlToCsvContext = new XmlToCsvContext(new XmlToCsvUsingDataSet(openFileDialog1.FileName));
-            txbFilePath.Text = openFileDialog1.FileName;
-
-            txbLog.Text += @"Opening file '" + openFileDialog1.FileName + @"' completed." + Environment.NewLine;
-
-            foreach (string item in _xmlToCsvContext.Strategy.TableNameCollection)
+            try
             {
-                lsbTables.Items.Add(item);
+                XmlToCsvUsingDataSet xmlToCsvUsingDataSet = new XmlToCsvUsingDataSet(openFileDialog1.FileName);
+
+                _xmlToCsvContext = new XmlToCsvContext(xmlToCsvUsingDataSet);
+                txbFilePath.Text = openFileDialog1.FileName;
+
+                txbLog.Text += @"Opening file '" + openFileDialog1.FileName + @"' completed." + Environment.NewLine;
+
+                foreach (string item in _xmlToCsvContext.Strategy.TableNameCollection)
+                {
+                    lsbTables.Items.Add(item);
+                }
             }
+            catch (XmlException ex)
+            {
+                DialogResult result = MessageBox.Show(this,
+                                                      @"Invalid XML file. Please make sure the XML file is XML-compliant.",
+                                                      @"Invalid XML error", MessageBoxButtons.RetryCancel,
+                                                      MessageBoxIcon.Error);
+                txbLog.Text += @"Invalid XML file. Please make sure the XML file is XML-compliant. Opening file '" +
+                               openFileDialog1.FileName + @"' did not complete." + Environment.NewLine;
+
+                if (result == DialogResult.Retry)
+                {
+                    e.Cancel = true;
+                }
+            }
+            catch (ArgumentException ex)
+            {
+                DialogResult result = MessageBox.Show(this,
+                                                      @"We have aparently an argument with this computer. He says: " + ex.Message,
+                                                      @"Argument Exception", MessageBoxButtons.RetryCancel,
+                                                      MessageBoxIcon.Error);
+                txbLog.Text += @"Argument Execption: " + ex.Message + Environment.NewLine;
+
+                if (result == DialogResult.Retry)
+                {
+                    e.Cancel = true;
+                }
+            }
+
+
         }
 
         private void ButSelectXmlClick(object sender, EventArgs e)

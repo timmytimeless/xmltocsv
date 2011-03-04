@@ -22,6 +22,7 @@ namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
             }
         }
 
+
         public override void ExportToCsv(string xmlTableName, string csvDestinationFilePath, Encoding encoding)
         {
             StreamWriter sw = CreateStreamWriter(xmlTableName, csvDestinationFilePath, encoding);

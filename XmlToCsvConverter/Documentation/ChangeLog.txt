@@ -1,3 +1,11 @@
+1.2.1
+-Upgrade from C# 3.0 to C#4.0 in order to allow programming with TaskParallel.
+-Replace one XML parse method with ParallelTask.
+-Handle XmlException error in GUI when selecting a non-compliant XML file.
+-Handle ArgumentException thrown in case a well-formed XML document contains unsupported nested data.
+===============================================
+
+1.2.0
 -Convert Solution from VS2008 to VS2010
 -Change Unit Test Framework from NUnit to MSTest
 -Code Cleanup (mostly removal of unused namespaces and code readability improvements)
