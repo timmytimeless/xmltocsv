@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Data;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml;
@@ -22,11 +22,10 @@ namespace Moor.XmlToCsvConverter
             saveFileDialog1.FileOk += SaveFileDialog1FileOk;
 
             butSelectFolder.Click += ButSelectFolderClick;
-            chbSaveAllTables.CheckedChanged += ChbSaveAllTablesCheckedChanged;
-            butSaveCsv.Click += ButSaveCsvClick;
-            txbFilePath.TextChanged += TxbFilePathTextChanged;
             butSelectXml.Click += ButSelectXmlClick;
             Load += ExportTool_Load;
+
+            gv.AutoGenerateColumns = false;
         }
 
         private void ExportTool_Load(object sender, EventArgs e)
@@ -39,7 +38,7 @@ namespace Moor.XmlToCsvConverter
             try
             {
                 _xmlToCsvContext.Execute(@lsbTables.SelectedItem.ToString(), @saveFileDialog1.FileName,
-                                         ((KeyValuePair<string, Encoding>) ddlEncoding.SelectedItem).Value);
+                                         ((KeyValuePair<string, Encoding>)ddlEncoding.SelectedItem).Value);
                 txbLog.Text += @"Saving  '" + lsbTables.SelectedItem + @"' to CSV completed." + Environment.NewLine;
             }
             catch (NullReferenceException)
@@ -54,13 +53,11 @@ namespace Moor.XmlToCsvConverter
         {
             lsbTables.Items.Clear();
 
-            var taskA = Task.Factory.StartNew(() => OpenXmlFile(e));
-
             try
             {
-                taskA.Wait();
+                OpenXmlFile(e);
             }
-            catch (XmlException ex)
+            catch (XmlException)
             {
                 DialogResult result = MessageBox.Show(this,
                                                       @"Invalid XML file. Please make sure the XML file is XML-compliant.",
@@ -80,10 +77,11 @@ namespace Moor.XmlToCsvConverter
         {
             try
             {
-                XmlToCsvUsingDataSet xmlToCsvUsingDataSet = new XmlToCsvUsingDataSet(openFileDialog1.FileName);
+                var xmlToCsvUsingDataSet = new XmlToCsvUsingDataSet(openFileDialog1.FileName);
 
                 _xmlToCsvContext = new XmlToCsvContext(xmlToCsvUsingDataSet);
-                txbFilePath.Text = openFileDialog1.FileName;
+
+                lblStatus.Text = openFileDialog1.FileName;
 
                 txbLog.Text += @"Opening file '" + openFileDialog1.FileName + @"' completed." + Environment.NewLine;
 
@@ -91,8 +89,10 @@ namespace Moor.XmlToCsvConverter
                 {
                     lsbTables.Items.Add(item);
                 }
+
+                butSelectFolder.Enabled = lsbTables.Items.Count > 0;
             }
-            catch (XmlException ex)
+            catch (XmlException)
             {
                 DialogResult result = MessageBox.Show(this,
                                                       @"Invalid XML file. Please make sure the XML file is XML-compliant.",
@@ -109,7 +109,7 @@ namespace Moor.XmlToCsvConverter
             catch (ArgumentException ex)
             {
                 DialogResult result = MessageBox.Show(this,
-                                                      @"We have aparently an argument with this computer. He says: " + ex.Message,
+                                                      @"An argument provided is invalid. The error message: " + ex.Message,
                                                       @"Argument Exception", MessageBoxButtons.RetryCancel,
                                                       MessageBoxIcon.Error);
                 txbLog.Text += @"Argument Execption: " + ex.Message + Environment.NewLine;
@@ -119,8 +119,19 @@ namespace Moor.XmlToCsvConverter
                     e.Cancel = true;
                 }
             }
+            catch (InvalidOperationException ex)
+            {
+                DialogResult result = MessageBox.Show(this,
+                                                      @"Invalid operation. The error message: " + ex.Message,
+                                                      @"Invalid operation", MessageBoxButtons.RetryCancel,
+                                                      MessageBoxIcon.Error);
+                txbLog.Text += @"Invalid Operation Execption: " + ex.Message + Environment.NewLine;
 
-
+                if (result == DialogResult.Retry)
+                {
+                    e.Cancel = true;
+                }
+            }
         }
 
         private void ButSelectXmlClick(object sender, EventArgs e)
@@ -134,54 +145,28 @@ namespace Moor.XmlToCsvConverter
             }
         }
 
-        private void TxbFilePathTextChanged(object sender, EventArgs e)
-        {
-            butSaveCsv.Enabled = !string.IsNullOrEmpty(txbFilePath.Text);
-            chbSaveAllTables.Enabled = true;
-        }
-
-        private void ButSaveCsvClick(object sender, EventArgs e)
+        private void Save()
         {
             txbLog.Text += @"Starting XML to CSV conversion:" + Environment.NewLine;
 
-            if (!chbSaveAllTables.Checked)
+            if (string.IsNullOrEmpty(folderBrowserDialog1.SelectedPath))
             {
-                txbLog.Text += @"Convert single XML table" + Environment.NewLine;
-                saveFileDialog1.AddExtension = true;
-                saveFileDialog1.DefaultExt = "csv";
-                saveFileDialog1.Filter = @"CSV files (*.csv)|*.csv|All files (*.*)|*.*";
-                saveFileDialog1.ShowDialog(this);
+                MessageBox.Show(this, @"No destination folder selected. Please select a destination folder.",
+                                @"No destination folder selected", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                txbLog.Text += @"No destination folder selected. Please select a destination folder." +
+                               Environment.NewLine;
             }
             else
             {
-                if (string.IsNullOrEmpty(folderBrowserDialog1.SelectedPath))
+                foreach (string tableName in lsbTables.Items)
                 {
-                    MessageBox.Show(this, @"No destination folder selected. Please select a destination folder.",
-                                    @"No destination folder selected", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    txbLog.Text += @"No destination folder selected. Please select a destination folder." +
-                                   Environment.NewLine;
+                    _xmlToCsvContext.Execute(tableName, folderBrowserDialog1.SelectedPath + @"\\" + tableName + ".csv", GetEncoding(ddlEncoding.SelectedItem.ToString()));
+                    txbLog.Text += @"Saving  '" + tableName + @"' to CSV completed." + Environment.NewLine;
+                    txbLog.Refresh();
                 }
-                else
-                {
-                    foreach (string tableName in lsbTables.Items)
-                    {
-                        _xmlToCsvContext.Execute(tableName,
-                                                 folderBrowserDialog1.SelectedPath + @"\\" + tableName + ".csv",
-                                                 ((KeyValuePair<string, Encoding>) ddlEncoding.SelectedItem).Value);
-                        txbLog.Text += @"Saving  '" + tableName + @"' to CSV completed." + Environment.NewLine;
-                        txbLog.Refresh();
-                    }
 
-                    MessageBox.Show(@"Saving all tables completed succesfully.");
-                }
+                MessageBox.Show(@"Saving tables in XML to CSV document completed succesfully.");
             }
-        }
-
-        private void ChbSaveAllTablesCheckedChanged(object sender, EventArgs e)
-        {
-            lsbTables.Enabled = !chbSaveAllTables.Checked;
-            butSelectFolder.Enabled = chbSaveAllTables.Checked;
-            butSaveCsv.Enabled = !chbSaveAllTables.Checked;
         }
 
         private void ButSelectFolderClick(object sender, EventArgs e)
@@ -192,32 +177,65 @@ namespace Moor.XmlToCsvConverter
             {
                 txbLog.Text += @"Destination folder for saving all tables: " + Environment.NewLine +
                                folderBrowserDialog1.SelectedPath + Environment.NewLine;
-            }
 
-            ButSaveCsvClick(sender, e);
+                Save();
+            }
         }
 
         private void PopulateEncodingOptions()
         {
-            ddlEncoding.DisplayMember = "Key";
-
-            var dic = new Dictionary<string, Encoding>
-                          {
-                              {"Default", Encoding.Default},
-                              {"ASCII", Encoding.ASCII},
-                              {"Unicode", Encoding.Unicode},
-                              {"UTF8", Encoding.UTF8},
-                              {"UTF32", Encoding.UTF32},
-                              {"BigEndianUnicode", Encoding.BigEndianUnicode}
-                          };
-
+            var dic = new List<string> { "Default", "ASCII", "Unicode", "UTF8", "UTF32", "BigEndianUnicode" };
 
             foreach (var pair in dic)
             {
                 ddlEncoding.Items.Add(pair);
             }
 
-            ddlEncoding.SelectedIndex = 0;
+            ddlEncoding.SelectedIndex = 3;
+        }
+
+        private static Encoding GetEncoding(string name)
+        {
+            if (name == "Default" || name == "UTF8")
+            {
+                return Encoding.UTF8;
+            }
+
+            if (name == "ASCII")
+            {
+                return Encoding.ASCII;
+            }
+
+            if (name == "Unicode")
+            {
+                return Encoding.Unicode;
+            }
+
+            if (name == "UTF32")
+            {
+                return Encoding.UTF32;
+            }
+
+            if (name == "BigEndianUnicode")
+            {
+                return Encoding.BigEndianUnicode;
+            }
+
+            throw new ArgumentOutOfRangeException("name", @"No valid encoding selected");
+        }
+
+        private void lsbTables_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            gv.Columns.Clear();
+
+            List<DataColumn> x = XmlToCsvUsingDataSet.GetColumnList(lblStatus.Text, lsbTables.SelectedItem.ToString());
+
+            foreach (var column in x)
+            {
+                gv.Columns.Add(column.ColumnName, column.ColumnName);
+                //txbLog.Text += column.ColumnName + ",";
+            }
+
         }
     }
 }

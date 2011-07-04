@@ -12,6 +12,7 @@ namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
         private string _csvDestinationFilePath;
         private DataTable _workingTable;
 
+
         public XmlToCsvUsingDataSet(string xmlSourceFilePath)
         {
             _xmlDataSet.ReadXml(xmlSourceFilePath);
@@ -21,7 +22,6 @@ namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
                 TableNameCollection.Add(table.TableName);
             }
         }
-
 
         public override void ExportToCsv(string xmlTableName, string csvDestinationFilePath, Encoding encoding)
         {
@@ -62,6 +62,22 @@ namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
             var fs = new FileStream(_csvDestinationFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
             var sw = new StreamWriter(fs, encoding);
             return sw;
+        }
+
+        public static List<DataColumn> GetColumnList(string xmlSourceFilePath, string xmlTableName)
+        {
+            var list = new List<DataColumn>();
+   
+            var ds = new DataSet("ds");
+            ds.ReadXml(xmlSourceFilePath);
+            var dt = ds.Tables[xmlTableName];
+
+            foreach (DataColumn column in dt.Columns)
+            {
+                list.Add(column);
+            }
+
+            return list;
         }
 
         private void WriteRowToCsv(string xmlTableName, StreamWriter sw, DataRow row)

@@ -7,16 +7,27 @@ namespace XmlToCsvTests
     [TestClass]
     public class XmlToCsvUsingLinqTest
     {
-        private XmlToCsvContext _xmlToCsvContext;
 
         [TestMethod]
-        public void TestInstantiation()
+        public void TestDataSetImplementation()
         {
-            _xmlToCsvContext = new XmlToCsvContext(new XmlToCsvUsingLinq(@"C:\Payslip.xml"));
+            XmlToCsvContext context = new XmlToCsvContext(new XmlToCsvUsingDataSet(@"C:\Payslip.xml"));
 
-            foreach (string s in _xmlToCsvContext.Strategy.TableNameCollection)
+            foreach (string s in context.Strategy.TableNameCollection)
             {
-                _xmlToCsvContext.Execute(s, @"C:\" + s + ".csv", Encoding.Unicode);
+                context.Execute(s, @"C:\" + s + ".csv", Encoding.Unicode);
+            }
+        }
+
+        [TestMethod]
+        public void ConvertUsingLinq()
+        {
+            var converter = new XmlToCsvUsingLinq(@"C:\Payslip.xml");
+            var context = new XmlToCsvContext(converter);
+
+            foreach (string xmlTableName in context.Strategy.TableNameCollection)
+            {
+                context.Execute(xmlTableName, @"C:\" + xmlTableName + ".csv", Encoding.Unicode);
             }
         }
     }
