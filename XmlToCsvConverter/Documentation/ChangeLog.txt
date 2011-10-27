@@ -1,3 +1,8 @@
+1.5.0
+-Added a console application to support command line execution.
+-Command line parsing thanks to http://cmdline.codeplex.com/
+===============================================
+
 1.4.0
 -Feature has been added that allows the user to preview the column names that are in each "table" in the selected xml file.
 -All tables contained withing the XML file are saved by default now. Previous version had an option to save single table which was the default behavior selected by default. 

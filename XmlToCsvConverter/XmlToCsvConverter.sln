@@ -19,9 +19,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		XmlToCsvConverter.vsmdi = XmlToCsvConverter.vsmdi
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XmlToCsv.Console", "XmlToCsv.Console\XmlToCsv.Console.csproj", "{89C09FF2-868B-495D-B372-919D3A4B417C}"
+EndProject
 Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 4
+		SccNumberOfProjects = 5
 		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccTeamFoundationServer = https://tfs.codeplex.com/tfs/tfs06
 		SccLocalPath0 = .
@@ -34,6 +36,9 @@ Global
 		SccProjectUniqueName3 = XmlToCsvTests\\XmlToCsvTests.csproj
 		SccProjectName3 = XmlToCsvTests
 		SccLocalPath3 = XmlToCsvTests
+		SccProjectUniqueName4 = XmlToCsv.Console\\XmlToCsv.Console.csproj
+		SccProjectName4 = XmlToCsv.Console
+		SccLocalPath4 = XmlToCsv.Console
 	EndGlobalSection
 	GlobalSection(TestCaseManagementSettings) = postSolution
 		CategoryFile = XmlToCsvConverter.vsmdi
@@ -55,6 +60,10 @@ Global
 		{267BEC3F-6071-4D3E-AB7A-501708B35A48}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{267BEC3F-6071-4D3E-AB7A-501708B35A48}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{267BEC3F-6071-4D3E-AB7A-501708B35A48}.Release|Any CPU.Build.0 = Release|Any CPU
+		{89C09FF2-868B-495D-B372-919D3A4B417C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89C09FF2-868B-495D-B372-919D3A4B417C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89C09FF2-868B-495D-B372-919D3A4B417C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89C09FF2-868B-495D-B372-919D3A4B417C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
