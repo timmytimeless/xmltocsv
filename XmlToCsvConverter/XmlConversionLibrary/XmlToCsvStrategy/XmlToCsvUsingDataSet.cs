@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Text;
-using System.Linq;
 
 namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
 {
@@ -19,25 +18,24 @@ namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
 
         }
 
-        public XmlToCsvUsingDataSet(string xmlSourceFilePath, bool renameTablesWhenDuplicateNamesExist)
+        public XmlToCsvUsingDataSet(string xmlSourceFilePath, bool autoRenameWhenNamingConflict)
         {
             try
             {
-                _xmlDataSet.ReadXml(xmlSourceFilePath);
+                XmlDataSet.ReadXml(xmlSourceFilePath);
 
-                foreach (DataTable table in _xmlDataSet.Tables)
+                foreach (DataTable table in XmlDataSet.Tables)
                 {
                     TableNameCollection.Add(table.TableName);
                 }
             }
             catch (DuplicateNameException)
             {
-
-                if (renameTablesWhenDuplicateNamesExist)
+                if (autoRenameWhenNamingConflict)
                 {
-                    _xmlDataSet.ReadXml(xmlSourceFilePath, XmlReadMode.IgnoreSchema);
+                    XmlDataSet.ReadXml(xmlSourceFilePath, XmlReadMode.IgnoreSchema);
 
-                    foreach (DataTable table in _xmlDataSet.Tables)
+                    foreach (DataTable table in XmlDataSet.Tables)
                     {
                         TableNameCollection.Add(table.TableName);
                     }
@@ -51,15 +49,20 @@ namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
             }
         }
 
+        public DataSet XmlDataSet
+        {
+            get { return _xmlDataSet; }
+        }
+
         /// <summary>
         /// Check for duplicates names in XML. Rename the table in case a clash with a column name is found.
         /// </summary>
         /// <returns>True if a duplicate XML name was found and renames the name clash. Otherwise returns false.</returns>
         private void RenameDuplicateColumn()
         {
-            foreach (DataTable table in _xmlDataSet.Tables)
+            foreach (DataTable table in XmlDataSet.Tables)
             {
-                bool hasDuplicate = _xmlDataSet.Tables[0].Columns.Contains(table.TableName);
+                bool hasDuplicate = XmlDataSet.Tables[0].Columns.Contains(table.TableName);
 
                 if (hasDuplicate)
                 {
@@ -78,7 +81,7 @@ namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
             {
                 WriteHeaderToCsv(sw);
 
-                foreach (DataRow row in _xmlDataSet.Tables[xmlTableName].Rows)
+                foreach (DataRow row in XmlDataSet.Tables[xmlTableName].Rows)
                 {
                     WriteRowToCsv(xmlTableName, sw, row);
                 }
@@ -98,7 +101,7 @@ namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
             HeaderColumnNameCollection.Clear();
 
             _csvDestinationFilePath = csvDestinationFilePath;
-            _workingTable = _xmlDataSet.Tables[xmlTableName];
+            _workingTable = XmlDataSet.Tables[xmlTableName];
             ColumnCount = _workingTable.Columns.Count;
 
             foreach (DataColumn column in _workingTable.Columns)
@@ -133,7 +136,7 @@ namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
 
             string rowValue = string.Empty;
 
-            foreach (DataColumn column in _xmlDataSet.Tables[xmlTableName].Columns)
+            foreach (DataColumn column in XmlDataSet.Tables[xmlTableName].Columns)
             {
                 bool isString = (column.DataType == typeof(string));
                 string columnValue;
@@ -185,7 +188,7 @@ namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
         {
             if (disposing)
             {
-                _xmlDataSet.Dispose();
+                XmlDataSet.Dispose();
             }
         }
     }

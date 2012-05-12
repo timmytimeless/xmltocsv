@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Text;
-using System.Threading.Tasks;
+using System.Linq;
 using System.Windows.Forms;
 using System.Xml;
 using Moor.XmlConversionLibrary.XmlToCsvStrategy;
@@ -24,8 +24,6 @@ namespace Moor.XmlToCsvConverter
             butSelectFolder.Click += ButSelectFolderClick;
             butSelectXml.Click += ButSelectXmlClick;
             Load += ExportTool_Load;
-
-            gv.AutoGenerateColumns = false;
         }
 
         private void ExportTool_Load(object sender, EventArgs e)
@@ -73,13 +71,14 @@ namespace Moor.XmlToCsvConverter
             }
         }
 
-        private void OpenXmlFile(CancelEventArgs e)
+        private void OpenXmlFile(CancelEventArgs e, bool autoRenameWhenNamingConflict = false)
         {
             try
             {
-                var xmlToCsvUsingDataSet = new XmlToCsvUsingDataSet(openFileDialog1.FileName);
-
-                _xmlToCsvContext = new XmlToCsvContext(xmlToCsvUsingDataSet);
+                using (var xmlToCsvUsingDataSet = new XmlToCsvUsingDataSet(openFileDialog1.FileName, autoRenameWhenNamingConflict))
+                {
+                    _xmlToCsvContext = new XmlToCsvContext(xmlToCsvUsingDataSet);
+                }
 
                 lblStatus.Text = openFileDialog1.FileName;
 
@@ -92,12 +91,23 @@ namespace Moor.XmlToCsvConverter
 
                 butSelectFolder.Enabled = lsbTables.Items.Count > 0;
             }
+            catch (DuplicateNameException ex)
+            {
+                DialogResult result = MessageBox.Show(@"The XML data contains conflicting names between table and column names. Do you want to continue by renaming the conflicting elements in the resulting CSV?",
+                    @"Duplicate Name Conflict", MessageBoxButtons.YesNo, MessageBoxIcon.Error);
+                if (result == DialogResult.Yes)
+                {
+                    //e.Cancel = true;
+                    OpenXmlFile(e, true);
+                }
+
+                txbLog.Text += @"DuplicateName Execption: " + ex.Message + Environment.NewLine;
+            }
             catch (XmlException)
             {
                 DialogResult result = MessageBox.Show(this,
                                                       @"Invalid XML file. Please make sure the XML file is XML-compliant.",
-                                                      @"Invalid XML error", MessageBoxButtons.RetryCancel,
-                                                      MessageBoxIcon.Error);
+                                                      @"Invalid XML error", MessageBoxButtons.RetryCancel, MessageBoxIcon.Error);
                 txbLog.Text += @"Invalid XML file. Please make sure the XML file is XML-compliant. Opening file '" +
                                openFileDialog1.FileName + @"' did not complete." + Environment.NewLine;
 
@@ -110,8 +120,7 @@ namespace Moor.XmlToCsvConverter
             {
                 DialogResult result = MessageBox.Show(this,
                                                       @"An argument provided is invalid. The error message: " + ex.Message,
-                                                      @"Argument Exception", MessageBoxButtons.RetryCancel,
-                                                      MessageBoxIcon.Error);
+                                                      @"Argument Exception", MessageBoxButtons.RetryCancel, MessageBoxIcon.Error);
                 txbLog.Text += @"Argument Execption: " + ex.Message + Environment.NewLine;
 
                 if (result == DialogResult.Retry)
@@ -191,7 +200,7 @@ namespace Moor.XmlToCsvConverter
                 ddlEncoding.Items.Add(pair);
             }
 
-            ddlEncoding.SelectedIndex = 3;
+            ddlEncoding.SelectedIndex = 0;
         }
 
         private static Encoding GetEncoding(string name)
@@ -226,16 +235,15 @@ namespace Moor.XmlToCsvConverter
 
         private void lsbTables_SelectedIndexChanged(object sender, EventArgs e)
         {
-            gv.Columns.Clear();
+            lsbColumns.Items.Clear();
 
-            List<DataColumn> x = XmlToCsvUsingDataSet.GetColumnList(lblStatus.Text, lsbTables.SelectedItem.ToString());
+            var ds = (DataSet)((dynamic)_xmlToCsvContext.Strategy).XmlDataSet;
+            DataTable selectedTable = ds.Tables.Cast<DataTable>().Single(n => n.TableName == lsbTables.SelectedItem.ToString());
 
-            foreach (var column in x)
+            foreach (DataColumn column in selectedTable.Columns)
             {
-                gv.Columns.Add(column.ColumnName, column.ColumnName);
-                //txbLog.Text += column.ColumnName + ",";
+                lsbColumns.Items.Add(column.ColumnName);
             }
-
         }
     }
 }
