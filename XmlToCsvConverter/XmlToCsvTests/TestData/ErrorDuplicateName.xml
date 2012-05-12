@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Employees>
+  <Employee>
+    <EmployeeId>c2e515e9-8feb-4bb5-b6de-3642e3f7157f</EmployeeId>
+    <EmployeeName>Bob</EmployeeName>
+    <Employees>
+      <Employee>
+        <EmployeeId>ba3f80be-78a0-499f-92db-4a87843654e1</EmployeeId>
+        <EmployeeName>Sue</EmployeeName>
+        <Employees />
+      </Employee>
+    </Employees>
+  </Employee>
+  <Employee>
+    <EmployeeId>535fdfa3-5118-45e6-9596-d2a8e8521e6c</EmployeeId>
+    <EmployeeName>Dan</EmployeeName>
+    <Employees>
+      <Employee>
+        <EmployeeId>e5f2b56f-3b91-4254-b827-5164288457b4</EmployeeId>
+        <EmployeeName>Ron</EmployeeName>
+        <Employees />
+      </Employee>
+    </Employees>
+  </Employee>
+  <Employee>
+    <EmployeeId>88a0819e-8990-4454-b35e-22fd08f95ed5</EmployeeId>
+    <EmployeeName>Mac</EmployeeName>
+    <Employees>
+      <Employee>
+        <EmployeeId>a5d2144b-ef41-441a-9ce3-11d3bc651b89</EmployeeId>
+        <EmployeeName>Amy</EmployeeName>
+        <Employees />
+      </Employee>
+    </Employees>
+  </Employee>
+</Employees>

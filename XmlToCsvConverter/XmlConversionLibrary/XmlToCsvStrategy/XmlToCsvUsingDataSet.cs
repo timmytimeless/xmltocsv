@@ -14,9 +14,16 @@ namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
 
 
         public XmlToCsvUsingDataSet(string xmlSourceFilePath)
+            : this(xmlSourceFilePath, false) 
+        {
+
+        }
+
+ 
+        public XmlToCsvUsingDataSet(string xmlSourceFilePath, bool renameTablesWhenDuplicateNamesExist) 
         {
             _xmlDataSet.ReadXml(xmlSourceFilePath);
-            
+
             foreach (DataTable table in _xmlDataSet.Tables)
             {
                 TableNameCollection.Add(table.TableName);
