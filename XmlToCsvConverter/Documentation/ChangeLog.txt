@@ -1,7 +1,8 @@
 1.6.0
 -Solution Cleanup
 -Added XML test data and referenced it using DeploymentItem attribute. Requires Local.TestSettings to have deployment enabled and reference the xml source directory or file. 
--Bug fix: DuplicateName: A column named 'SomeName' already belongs to this DataTable: cannot set a nested table name to the same name.
+-Bug fix: DuplicateName: A column named 'bla' already belongs to this DataTable: cannot set a nested table name to the same name.
+-Bug fix: encoding was not working correctly in XmlToCsvUsingLinq class when converted XML.
 ===============================================
 
 1.5.0

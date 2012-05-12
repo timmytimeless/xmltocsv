@@ -46,7 +46,7 @@ namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
                 IEnumerable<XElement> list = workingTable.ToList();
 
                 var fs = new FileStream(_csvDestinationFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
-                var sw = new StreamWriter(fs, Encoding.Unicode);
+                var sw = new StreamWriter(fs, encoding);
 
                 string headerLine = string.Empty;
 
@@ -59,7 +59,6 @@ namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
 
                 using (sw)
                 {
-                    
                     char[] charsToTrim = { ',' };
                     sw.WriteLine(headerLine.TrimEnd(charsToTrim));
 

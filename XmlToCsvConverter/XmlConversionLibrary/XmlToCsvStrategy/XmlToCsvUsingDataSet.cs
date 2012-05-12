@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Text;
+using System.Linq;
 
 namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
 {
@@ -12,21 +13,60 @@ namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
         private string _csvDestinationFilePath;
         private DataTable _workingTable;
 
-
         public XmlToCsvUsingDataSet(string xmlSourceFilePath)
-            : this(xmlSourceFilePath, false) 
+            : this(xmlSourceFilePath, false)
         {
 
         }
 
- 
-        public XmlToCsvUsingDataSet(string xmlSourceFilePath, bool renameTablesWhenDuplicateNamesExist) 
+        public XmlToCsvUsingDataSet(string xmlSourceFilePath, bool renameTablesWhenDuplicateNamesExist)
         {
-            _xmlDataSet.ReadXml(xmlSourceFilePath);
+            try
+            {
+                _xmlDataSet.ReadXml(xmlSourceFilePath);
 
+                foreach (DataTable table in _xmlDataSet.Tables)
+                {
+                    TableNameCollection.Add(table.TableName);
+                }
+            }
+            catch (DuplicateNameException)
+            {
+
+                if (renameTablesWhenDuplicateNamesExist)
+                {
+                    _xmlDataSet.ReadXml(xmlSourceFilePath, XmlReadMode.IgnoreSchema);
+
+                    foreach (DataTable table in _xmlDataSet.Tables)
+                    {
+                        TableNameCollection.Add(table.TableName);
+                    }
+
+                    RenameDuplicateColumn();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Check for duplicates names in XML. Rename the table in case a clash with a column name is found.
+        /// </summary>
+        /// <returns>True if a duplicate XML name was found and renames the name clash. Otherwise returns false.</returns>
+        private void RenameDuplicateColumn()
+        {
             foreach (DataTable table in _xmlDataSet.Tables)
             {
-                TableNameCollection.Add(table.TableName);
+                bool hasDuplicate = _xmlDataSet.Tables[0].Columns.Contains(table.TableName);
+
+                if (hasDuplicate)
+                {
+                    TableNameCollection.Remove(table.TableName);
+                    TableNameCollection.Add(table.TableName + "_Renamed");
+                    table.TableName = table.TableName + "_Renamed";
+                }
             }
         }
 
@@ -74,7 +114,7 @@ namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
         public static List<DataColumn> GetColumnList(string xmlSourceFilePath, string xmlTableName)
         {
             var list = new List<DataColumn>();
-   
+
             var ds = new DataSet("ds");
             ds.ReadXml(xmlSourceFilePath);
             var dt = ds.Tables[xmlTableName];
