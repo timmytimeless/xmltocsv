@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
 {
     public class XmlToCsvUsingDataSet : XmlToCsvStrategyBase, IDisposable
     {
-        private readonly DataSet _xmlDataSet = new DataSet();
         private string _csvDestinationFilePath;
         private DataTable _workingTable;
 
@@ -20,6 +20,7 @@ namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
 
         public XmlToCsvUsingDataSet(string xmlSourceFilePath, bool autoRenameWhenNamingConflict)
         {
+            XmlDataSet = new DataSet();
             try
             {
                 XmlDataSet.ReadXml(xmlSourceFilePath);
@@ -49,10 +50,7 @@ namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
             }
         }
 
-        public DataSet XmlDataSet
-        {
-            get { return _xmlDataSet; }
-        }
+        public DataSet XmlDataSet { get; private set; }
 
         /// <summary>
         /// Check for duplicates names in XML. Rename the table in case a clash with a column name is found.
@@ -114,19 +112,13 @@ namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
             return sw;
         }
 
-        public static List<DataColumn> GetColumnList(string xmlSourceFilePath, string xmlTableName)
+        [Obsolete("Use XmlDataSet.Tables[xmlTableName].Columns instead.")]
+        public List<DataColumn> GetColumnList(string xmlSourceFilePath, string xmlTableName)
         {
-            var list = new List<DataColumn>();
-
-            var ds = new DataSet("ds");
-            ds.ReadXml(xmlSourceFilePath);
-            var dt = ds.Tables[xmlTableName];
-
-            foreach (DataColumn column in dt.Columns)
-            {
-                list.Add(column);
-            }
-
+            //var ds = new DataSet("ds");
+            //ds.ReadXml(xmlSourceFilePath);
+            //var dt = XmlDataSet.Tables[xmlTableName];
+            List<DataColumn> list = XmlDataSet.Tables[xmlTableName].Columns.Cast<DataColumn>().ToList();
             return list;
         }
 
