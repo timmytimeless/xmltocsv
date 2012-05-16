@@ -237,8 +237,8 @@ namespace Moor.XmlToCsvConverter
         {
             lsbColumns.Items.Clear();
 
-            var ds = (DataSet)((dynamic)_xmlToCsvContext.Strategy).XmlDataSet;
-            DataTable selectedTable = ds.Tables.Cast<DataTable>().Single(n => n.TableName == lsbTables.SelectedItem.ToString());
+            var dataset = ((XmlToCsvUsingDataSet)_xmlToCsvContext.Strategy).XmlDataSet;
+            DataTable selectedTable = dataset.Tables.Cast<DataTable>().Single(n => n.TableName == lsbTables.SelectedItem.ToString());
 
             foreach (DataColumn column in selectedTable.Columns)
             {

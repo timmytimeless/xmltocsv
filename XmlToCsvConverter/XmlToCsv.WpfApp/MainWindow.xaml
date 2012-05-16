@@ -1,0 +1,64 @@
+﻿<Window
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	x:Class="XmlToCsv.WpfApp.MainWindow"
+	x:Name="Window"
+	Title="MainWindow"
+	Width="800" Height="640" WindowStyle="SingleBorderWindow" WindowState="Normal" HorizontalAlignment="Center">
+
+    <Window.Background>
+        <ImageBrush />
+    </Window.Background>
+    <Grid x:Name="LayoutRoot">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="30*" />
+            <ColumnDefinition Width="588*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="126*" />
+            <RowDefinition Height="64*" />
+            <RowDefinition Height="393*" />
+            <RowDefinition Height="18*" />
+        </Grid.RowDefinitions>
+        <Button x:Name="butOpenFile" Content="Open XML File" HorizontalAlignment="Right" Margin="0,37,12,0" VerticalAlignment="Top" RenderTransformOrigin="1.427,0.091" Click="butOpenFile_Click" Width="160" Grid.Column="1" Height="44" FontSize="18">
+            <Button.Background>
+                <LinearGradientBrush EndPoint="0,1" StartPoint="0,0">
+                    <GradientStop Color="#FFF3F3F3" Offset="0"/>
+                    <GradientStop Color="#FFEBEBEB" Offset="0.5"/>
+                    <GradientStop Color="#FFDDDDDD" Offset="0.5"/>
+                    <GradientStop Color="#FFCDCDCD" Offset="1"/>
+                </LinearGradientBrush>
+            </Button.Background>
+        </Button>
+        <TextBox Margin="0,0,181,0" TextWrapping="NoWrap" VerticalAlignment="Top" RenderTransformOrigin="1.571,1.867" Name="txbSelectedXmlFile" FontSize="18" Grid.Column="1" Height="44" Text="" Grid.Row="1" OpacityMask="#B4000000" IsReadOnly="True" />
+        <TreeView Margin="0,0,388,0" Name="trv" FontFamily="Courier New" SelectedItemChanged="trv_SelectedItemChanged" Grid.Column="1" Grid.Row="2" IsManipulationEnabled="True" OpacityMask="#B4000000" Foreground="Blue" />
+        <TextBox Height="23" HorizontalAlignment="Left" Margin="381,33,0,0" Name="txbValue" VerticalAlignment="Top" Width="160" Grid.Column="1" PreviewKeyDown="txbValue_PreviewKeyDown" Grid.Row="2" />
+        <Label Content="Column Name" HorizontalAlignment="Left" Margin="381,1,0,0" VerticalAlignment="Top" Grid.Column="1" Width="178" Grid.Row="2" />
+        <TextBox Height="299" HorizontalAlignment="Left" Margin="381,94,0,0" Name="txbLog" VerticalAlignment="Top" Width="347" TextWrapping="Wrap" Foreground="White" Grid.Column="1" Grid.Row="2" OpacityMask="#B4000000">
+            <TextBox.Background>
+                <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                    <GradientStop Color="Black" Offset="0" />
+                    <GradientStop Color="#90000000" Offset="1" />
+                </LinearGradientBrush>
+            </TextBox.Background>
+        </TextBox>
+        <Button Content="Save Changes" HorizontalAlignment="Right" Margin="0,33,62,0" Name="butSaveColumnName" RenderTransformOrigin="1.427,0.091" VerticalAlignment="Top" Width="98" Grid.Column="1" Click="butSaveColumnName_Click" Grid.Row="2" Height="23">
+            <Button.Background>
+                <LinearGradientBrush EndPoint="0,1" StartPoint="0,0">
+                    <GradientStop Color="#FFF3F3F3" Offset="0" />
+                    <GradientStop Color="#FFEBEBEB" Offset="0.5" />
+                    <GradientStop Color="#FFDDDDDD" Offset="0.5" />
+                    <GradientStop Color="#FFCDCDCD" Offset="1" />
+                </LinearGradientBrush>
+            </Button.Background>
+        </Button>
+        <Image Grid.Column="1" Height="23" HorizontalAlignment="Left" Margin="547,33,0,0" Name="image1" Stretch="None" VerticalAlignment="Top" Width="27" DataContext="{Binding}" Source="/XmlToCsv.WpfApp;component/Images/question-mark.png" ClipToBounds="False" ToolTip="Spaces not allowed by XML" Grid.Row="2" />
+        <Button Content="Convert to CSV" Grid.Column="1" Height="44" HorizontalAlignment="Center" Margin="568,0,12,20" Name="button1" VerticalAlignment="Bottom" Width="160" FontSize="18" Grid.Row="1" />
+        <Label Content="Log" HorizontalAlignment="Left" Margin="381,62,0,0" VerticalAlignment="Top" Width="178" Grid.Column="1" Grid.Row="2" />
+        <Grid.Background>
+            <ImageBrush ImageSource="/XmlToCsv.WpfApp;component/Images/bgLuxonSoftwareApp.png" AlignmentX="Left" AlignmentY="Top" Stretch="None" TileMode="None" />
+        </Grid.Background>
+
+    </Grid>
+
+</Window>
