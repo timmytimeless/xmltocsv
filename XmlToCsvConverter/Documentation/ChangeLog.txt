@@ -2,7 +2,9 @@
 -Solution Cleanup
 -Added XML test data and referenced it using DeploymentItem attribute. Requires Local.TestSettings to have deployment enabled and reference the xml source directory or file. 
 -In GUI the initially selected value is now Default instead of Unicode.
--In GUI added the option to automatically rename a 'table' element to prevent naming clashes between tables and columns occurs, which otherwise result in a DuplicateNameException.
+-In GUI, added new feature to automatically rename a 'table' element to prevent naming clashes between tables and columns occurs, which otherwise result in a DuplicateNameException.
+-In GUI, removed the gridview to display column names, replaced with more appropriate ListBox.
+-In GUI, added new feature to preview contents of a XML node on a RTF textbox.
 -Bug fix: DuplicateName: A column named 'bla' already belongs to this DataTable: cannot set a nested table name to the same name.
 -Bug fix: encoding was not working correctly in XmlToCsvUsingLinq class when converted XML.
 
