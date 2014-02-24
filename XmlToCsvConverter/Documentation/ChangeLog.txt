@@ -1,3 +1,6 @@
+1.6.1
+-Double quote escape didn't work as it should. Fixed.
+
 1.6.0
 -Solution Cleanup
 -Added XML test data and referenced it using DeploymentItem attribute. Requires Local.TestSettings to have deployment enabled and reference the xml source directory or file. 

@@ -64,14 +64,10 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="TestData\DataWithAttributes.xml" />
+    <Content Include="TestData\DoubleQuoteEscape.xml" />
     <Content Include="TestData\ErrorDuplicateName.xml" />
     <Content Include="TestData\data.xml" />
     <Content Include="TestData\NestedDataError.xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="TestData\Test.xsd">
-      <SubType>Designer</SubType>
-    </None>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

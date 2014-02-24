@@ -137,6 +137,9 @@ namespace Moor.XmlConversionLibrary.XmlToCsvStrategy
                 {
                     string stringValue = row[column].ToString();
                     stringValue = stringValue.Replace(Environment.NewLine, @"\n");
+                    const string doubleQuote = "\"";
+
+                    stringValue = stringValue.Replace(doubleQuote, doubleQuote + doubleQuote);
                     columnValue = "\"" + stringValue + "\"";
                 }
                 else

@@ -36,6 +36,20 @@ namespace XmlToCsvTests
         }
 
         [TestMethod]
+        public void DoubleQuoteEscapeTest()
+        {
+            const string path = @"DoubleQuoteEscape.xml";
+            var converter = new XmlToCsvUsingDataSet(path);
+            var context = new XmlToCsvContext(converter);
+            Assert.AreEqual(1, context.Strategy.TableNameCollection.Count);
+
+            foreach (string xmlTableName in context.Strategy.TableNameCollection)
+            {
+                context.Execute(xmlTableName, @"dataDataSet_" + xmlTableName + ".csv", Encoding.Default);
+            }
+        }
+
+        [TestMethod]
         public void InvalidOperationNestedTableExceptionTest()
         {
             const string path = @"NestedDataError.xml";
