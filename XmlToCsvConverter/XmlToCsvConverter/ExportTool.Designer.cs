@@ -38,28 +38,32 @@
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripLabel1 = new System.Windows.Forms.ToolStripLabel();
             this.ddlEncoding = new System.Windows.Forms.ToolStripComboBox();
-            this.butSelectFolder = new System.Windows.Forms.ToolStripButton();
             this.lblTableNames = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.lblStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.lsbTables = new System.Windows.Forms.ListBox();
             this.lsbColumns = new System.Windows.Forms.ListBox();
+            this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
+            this.flowLayoutPanel1 = new System.Windows.Forms.FlowLayoutPanel();
+            this.butSelectFolder = new System.Windows.Forms.Button();
             this.toolStrip2.SuspendLayout();
             this.statusStrip1.SuspendLayout();
+            this.tableLayoutPanel1.SuspendLayout();
+            this.flowLayoutPanel1.SuspendLayout();
             this.SuspendLayout();
             // 
             // txbLog
             // 
-            this.txbLog.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.txbLog.Dock = System.Windows.Forms.DockStyle.Fill;
             this.txbLog.Font = new System.Drawing.Font("Courier New", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txbLog.ForeColor = System.Drawing.Color.Black;
-            this.txbLog.Location = new System.Drawing.Point(0, 236);
+            this.txbLog.Location = new System.Drawing.Point(0, 371);
             this.txbLog.Multiline = true;
             this.txbLog.Name = "txbLog";
             this.txbLog.ReadOnly = true;
             this.txbLog.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txbLog.Size = new System.Drawing.Size(711, 245);
+            this.txbLog.Size = new System.Drawing.Size(584, 69);
             this.txbLog.TabIndex = 16;
             // 
             // openFileDialog1
@@ -72,11 +76,10 @@
             this.butSelectXml,
             this.toolStripSeparator1,
             this.toolStripLabel1,
-            this.ddlEncoding,
-            this.butSelectFolder});
+            this.ddlEncoding});
             this.toolStrip2.Location = new System.Drawing.Point(0, 0);
             this.toolStrip2.Name = "toolStrip2";
-            this.toolStrip2.Size = new System.Drawing.Size(711, 25);
+            this.toolStrip2.Size = new System.Drawing.Size(584, 25);
             this.toolStrip2.TabIndex = 22;
             this.toolStrip2.Text = "toolStrip2";
             // 
@@ -107,34 +110,21 @@
             this.ddlEncoding.Name = "ddlEncoding";
             this.ddlEncoding.Size = new System.Drawing.Size(121, 25);
             // 
-            // butSelectFolder
-            // 
-            this.butSelectFolder.BackColor = System.Drawing.SystemColors.Control;
-            this.butSelectFolder.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.butSelectFolder.Enabled = false;
-            this.butSelectFolder.Image = ((System.Drawing.Image)(resources.GetObject("butSelectFolder.Image")));
-            this.butSelectFolder.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.butSelectFolder.Name = "butSelectFolder";
-            this.butSelectFolder.Size = new System.Drawing.Size(100, 22);
-            this.butSelectFolder.Text = "Convert to CSV...";
-            // 
             // lblTableNames
             // 
-            this.lblTableNames.Dock = System.Windows.Forms.DockStyle.Top;
             this.lblTableNames.ForeColor = System.Drawing.Color.SteelBlue;
-            this.lblTableNames.Location = new System.Drawing.Point(0, 25);
+            this.lblTableNames.Location = new System.Drawing.Point(3, 6);
             this.lblTableNames.Name = "lblTableNames";
-            this.lblTableNames.Size = new System.Drawing.Size(711, 13);
+            this.lblTableNames.Size = new System.Drawing.Size(264, 18);
             this.lblTableNames.TabIndex = 28;
             this.lblTableNames.Text = "Tables in XML file (select to see column names)";
             // 
             // label1
             // 
-            this.label1.Dock = System.Windows.Forms.DockStyle.Top;
             this.label1.ForeColor = System.Drawing.Color.SteelBlue;
-            this.label1.Location = new System.Drawing.Point(270, 38);
+            this.label1.Location = new System.Drawing.Point(295, 6);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(441, 13);
+            this.label1.Size = new System.Drawing.Size(286, 18);
             this.label1.TabIndex = 32;
             this.label1.Text = "Column Names";
             // 
@@ -144,7 +134,7 @@
             this.lblStatus});
             this.statusStrip1.Location = new System.Drawing.Point(0, 481);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(711, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(584, 22);
             this.statusStrip1.TabIndex = 33;
             this.statusStrip1.Text = "statusStrip1";
             // 
@@ -155,11 +145,11 @@
             // 
             // lsbTables
             // 
-            this.lsbTables.Dock = System.Windows.Forms.DockStyle.Left;
+            this.lsbTables.Dock = System.Windows.Forms.DockStyle.Fill;
             this.lsbTables.FormattingEnabled = true;
-            this.lsbTables.Location = new System.Drawing.Point(0, 38);
+            this.lsbTables.Location = new System.Drawing.Point(3, 27);
             this.lsbTables.Name = "lsbTables";
-            this.lsbTables.Size = new System.Drawing.Size(270, 198);
+            this.lsbTables.Size = new System.Drawing.Size(286, 320);
             this.lsbTables.TabIndex = 10;
             this.lsbTables.SelectedIndexChanged += new System.EventHandler(this.lsbTables_SelectedIndexChanged);
             // 
@@ -167,31 +157,72 @@
             // 
             this.lsbColumns.Dock = System.Windows.Forms.DockStyle.Fill;
             this.lsbColumns.FormattingEnabled = true;
-            this.lsbColumns.Location = new System.Drawing.Point(270, 51);
+            this.lsbColumns.Location = new System.Drawing.Point(295, 27);
             this.lsbColumns.Name = "lsbColumns";
-            this.lsbColumns.Size = new System.Drawing.Size(441, 185);
+            this.lsbColumns.Size = new System.Drawing.Size(286, 320);
             this.lsbColumns.TabIndex = 34;
+            // 
+            // tableLayoutPanel1
+            // 
+            this.tableLayoutPanel1.ColumnCount = 2;
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel1.Controls.Add(this.lblTableNames, 0, 0);
+            this.tableLayoutPanel1.Controls.Add(this.lsbColumns, 1, 1);
+            this.tableLayoutPanel1.Controls.Add(this.label1, 1, 0);
+            this.tableLayoutPanel1.Controls.Add(this.lsbTables, 0, 1);
+            this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Top;
+            this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 25);
+            this.tableLayoutPanel1.Name = "tableLayoutPanel1";
+            this.tableLayoutPanel1.Padding = new System.Windows.Forms.Padding(0, 6, 0, 0);
+            this.tableLayoutPanel1.RowCount = 2;
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 18F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(584, 346);
+            this.tableLayoutPanel1.TabIndex = 35;
+            // 
+            // flowLayoutPanel1
+            // 
+            this.flowLayoutPanel1.Controls.Add(this.butSelectFolder);
+            this.flowLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.flowLayoutPanel1.FlowDirection = System.Windows.Forms.FlowDirection.RightToLeft;
+            this.flowLayoutPanel1.Location = new System.Drawing.Point(0, 440);
+            this.flowLayoutPanel1.Name = "flowLayoutPanel1";
+            this.flowLayoutPanel1.Padding = new System.Windows.Forms.Padding(0, 6, 12, 0);
+            this.flowLayoutPanel1.Size = new System.Drawing.Size(584, 41);
+            this.flowLayoutPanel1.TabIndex = 36;
+            // 
+            // butSelectFolder
+            // 
+            this.butSelectFolder.AutoSize = true;
+            this.butSelectFolder.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.butSelectFolder.Location = new System.Drawing.Point(470, 9);
+            this.butSelectFolder.Name = "butSelectFolder";
+            this.butSelectFolder.Size = new System.Drawing.Size(99, 23);
+            this.butSelectFolder.TabIndex = 0;
+            this.butSelectFolder.Text = "Convert to CSV...";
+            this.butSelectFolder.UseVisualStyleBackColor = true;
             // 
             // ExportTool
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(711, 503);
-            this.Controls.Add(this.lsbColumns);
-            this.Controls.Add(this.label1);
-            this.Controls.Add(this.lsbTables);
-            this.Controls.Add(this.lblTableNames);
-            this.Controls.Add(this.toolStrip2);
+            this.ClientSize = new System.Drawing.Size(584, 503);
             this.Controls.Add(this.txbLog);
+            this.Controls.Add(this.tableLayoutPanel1);
+            this.Controls.Add(this.toolStrip2);
+            this.Controls.Add(this.flowLayoutPanel1);
             this.Controls.Add(this.statusStrip1);
             this.MinimumSize = new System.Drawing.Size(600, 541);
             this.Name = "ExportTool";
-            this.ShowIcon = false;
             this.Text = "ExportTool";
             this.toolStrip2.ResumeLayout(false);
             this.toolStrip2.PerformLayout();
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
+            this.tableLayoutPanel1.ResumeLayout(false);
+            this.flowLayoutPanel1.ResumeLayout(false);
+            this.flowLayoutPanel1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -212,8 +243,10 @@
         private System.Windows.Forms.ToolStripComboBox ddlEncoding;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel lblStatus;
-        private System.Windows.Forms.ToolStripButton butSelectFolder;
         private System.Windows.Forms.ListBox lsbTables;
         private System.Windows.Forms.ListBox lsbColumns;
+        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
+        private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel1;
+        private System.Windows.Forms.Button butSelectFolder;
     }
 }

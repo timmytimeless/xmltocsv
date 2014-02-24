@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("XmlToCsvConverter")]
-[assembly: AssemblyDescription("GUI to convert XML data to CSV data")]
+[assembly: AssemblyDescription("GUI for converting from XML to CSV format")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Luxon Software Development")]
+[assembly: AssemblyCompany("Luxon Software")]
 [assembly: AssemblyProduct("XmlToCsvConverter")]
-[assembly: AssemblyCopyright("Copyright © Luxon Software Development 2011")]
+[assembly: AssemblyCopyright("Copyright © Luxon Software 2014")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -32,5 +32,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.6.0.0")]
-[assembly: AssemblyFileVersion("1.6.0.0")]
+[assembly: AssemblyVersion("1.6.1.0")]
+[assembly: AssemblyFileVersion("1.6.1.0")]

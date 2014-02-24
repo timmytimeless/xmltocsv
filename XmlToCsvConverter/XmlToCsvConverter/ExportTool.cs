@@ -141,6 +141,11 @@ namespace Moor.XmlToCsvConverter
                     e.Cancel = true;
                 }
             }
+            catch (Exception ex)
+            {
+                DialogResult result = MessageBox.Show(this, @"Unexpected error.", @"Unexpected error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                txbLog.Text += @"Unexpected error: " + ex.Message + Environment.NewLine;
+            }
         }
 
         private void ButSelectXmlClick(object sender, EventArgs e)
@@ -237,12 +242,24 @@ namespace Moor.XmlToCsvConverter
         {
             lsbColumns.Items.Clear();
 
-            var dataset = ((XmlToCsvUsingDataSet)_xmlToCsvContext.Strategy).XmlDataSet;
-            DataTable selectedTable = dataset.Tables.Cast<DataTable>().Single(n => n.TableName == lsbTables.SelectedItem.ToString());
-
-            foreach (DataColumn column in selectedTable.Columns)
+            try
             {
-                lsbColumns.Items.Add(column.ColumnName);
+                var dataset = ((XmlToCsvUsingDataSet)_xmlToCsvContext.Strategy).XmlDataSet;
+
+                if (lsbTables.SelectedItem != null)
+                {
+                    DataTable selectedTable = dataset.Tables.Cast<DataTable>().Single(n => n.TableName == lsbTables.SelectedItem.ToString());
+
+                    foreach (DataColumn column in selectedTable.Columns)
+                    {
+                        lsbColumns.Items.Add(column.ColumnName);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                DialogResult result = MessageBox.Show(this, @"Unexpected error.", @"Unexpected error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                txbLog.Text += @"Unexpected error: " + ex.Message + Environment.NewLine;
             }
         }
     }
