@@ -1,90 +1,88 @@
 ﻿using System;
 using System.Data;
 using System.Text;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moor.XmlConversionLibrary.XmlToCsvStrategy;
+using NUnit.Framework;
 
 namespace XmlToCsvTests
 {
-    [TestClass]
+
     public class XmlToCsvTests
     {
-        [TestMethod]
+        [Test]
         public void DataSetImplementationTest()
         {
-            const string path = @"data.xml";
-            var converter = new XmlToCsvUsingDataSet(path);
-            var context = new XmlToCsvContext(converter);
-            Assert.AreEqual(1, context.Strategy.TableNameCollection.Count);
-            foreach (string xmlTableName in context.Strategy.TableNameCollection)
+            const string path = @"TestData/data.xml";
+            var context = new XmlToCsvContext(new XmlToCsvUsingDataSet(path));
+            Assert.That(context.Strategy.TableNameCollection.Count, Is.EqualTo(1));
+            foreach (var xmlTableName in context.Strategy.TableNameCollection)
             {
                 context.Execute(xmlTableName, @"dataDataSet_" + xmlTableName + ".csv", Encoding.Default);
             }
         }
 
-        [TestMethod]
+        [Test]
         public void CanReadAttributeTest()
         {
-            const string path = @"DataWithAttributes.xml";
-            var converter = new XmlToCsvUsingDataSet(path);
-            var context = new XmlToCsvContext(converter);
-            Assert.AreEqual(2, context.Strategy.TableNameCollection.Count);
-            foreach (string xmlTableName in context.Strategy.TableNameCollection)
+            const string path = @"TestData/DataWithAttributes.xml";
+            var context = new XmlToCsvContext(new XmlToCsvUsingDataSet(path));
+            Assert.That(context.Strategy.TableNameCollection.Count, Is.EqualTo(2));
+
+            foreach (var xmlTableName in context.Strategy.TableNameCollection)
             {
-                context.Execute(xmlTableName, @"dataDataSet_" + xmlTableName + ".csv", Encoding.Default);
+                context.Execute(xmlTableName, @"TestData/dataDataSet_" + xmlTableName + ".csv", Encoding.Default);
             }
         }
 
-        [TestMethod]
+        [Test]
         public void DoubleQuoteEscapeTest()
         {
-            const string path = @"DoubleQuoteEscape.xml";
-            var converter = new XmlToCsvUsingDataSet(path);
-            var context = new XmlToCsvContext(converter);
-            Assert.AreEqual(1, context.Strategy.TableNameCollection.Count);
+            const string path = @"TestData/DoubleQuoteEscape.xml";
+            var context = new XmlToCsvContext(new XmlToCsvUsingDataSet(path));
+            Assert.That(context.Strategy.TableNameCollection.Count, Is.EqualTo(1));
 
-            foreach (string xmlTableName in context.Strategy.TableNameCollection)
+            foreach (var xmlTableName in context.Strategy.TableNameCollection)
             {
-                context.Execute(xmlTableName, @"dataDataSet_" + xmlTableName + ".csv", Encoding.Default);
+                context.Execute(xmlTableName, string.Format(@"TestData/dataDataSet_{0}.csv", xmlTableName), Encoding.Default);
             }
         }
 
-        [TestMethod]
+        [Test]
         public void InvalidOperationNestedTableExceptionTest()
         {
-            const string path = @"NestedDataError.xml";
-            TestHelper.Throws<InvalidOperationException>(() => new XmlToCsvUsingDataSet(path), "Nested table 'Contact-Address' which inherits its namespace cannot have multiple parent tables in different namespaces.");
+            const string path = @"TestData/NestedDataError.xml";
+            TestHelper.Throws<InvalidOperationException>(() => new XmlToCsvUsingDataSet(path),
+                "Nested table 'Contact-Address' which inherits its namespace cannot have multiple parent tables in different namespaces.");
         }
 
-        [TestMethod]
+        [Test]
         public void LinqImplementationTest()
         {
-            const string path = @"data.xml";
+            const string path = @"TestData/data.xml";
             var converter = new XmlToCsvUsingLinq(path);
             var context = new XmlToCsvContext(converter);
-            Assert.AreEqual(1, context.Strategy.TableNameCollection.Count);
-            foreach (string xmlTableName in context.Strategy.TableNameCollection)
+            Assert.That(context.Strategy.TableNameCollection.Count, Is.EqualTo(1));
+            foreach (var xmlTableName in context.Strategy.TableNameCollection)
             {
-                context.Execute(xmlTableName, @"dataLinq_" + xmlTableName + ".csv", Encoding.Default);
+                context.Execute(xmlTableName, @"TestData/dataLinq_" + xmlTableName + ".csv", Encoding.Default);
             }
         }
 
-        [TestMethod]
+        [Test]
         public void DuplicateNameErrorTest()
         {
-            const string path = @"ErrorDuplicateName.xml";
+            const string path = @"TestData/ErrorDuplicateName.xml";
             TestHelper.Throws<DuplicateNameException>(() => new XmlToCsvUsingDataSet(path), "A column named 'Employees' already belongs to this DataTable: cannot set a nested table name to the same name.");
         }
 
-        [TestMethod]
+        [Test]
         public void DuplicateNameRenamedTest()
         {
-            const string path = @"ErrorDuplicateName.xml";
-            var converter = new XmlToCsvUsingDataSet(path, true);
-            var context = new XmlToCsvContext(converter);
+            const string path = @"TestData/ErrorDuplicateName.xml";
+            var context = new XmlToCsvContext(new XmlToCsvUsingDataSet(path, true));
             Assert.AreEqual(2, context.Strategy.TableNameCollection.Count);
 
-            foreach (string xmlTableName in context.Strategy.TableNameCollection)
+            foreach (var xmlTableName in context.Strategy.TableNameCollection)
             {
                 context.Execute(xmlTableName, @"ErrorDuplicateName_" + xmlTableName + ".csv", Encoding.Default);
             }

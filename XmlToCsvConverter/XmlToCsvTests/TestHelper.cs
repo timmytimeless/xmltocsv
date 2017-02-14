@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 
 namespace XmlToCsvTests
 {
@@ -14,8 +11,7 @@ namespace XmlToCsvTests
             try
             {
                 action();
-
-                Assert.Fail("Exception of type {0} expected; got none exception", typeof(TException).Name);
+                Assert.Fail("Exception of type {0} expected, but no exception was thrown", typeof(TException).Name);
             }
             catch (TException ex)
             {
@@ -23,7 +19,7 @@ namespace XmlToCsvTests
             }
             catch (Exception ex)
             {
-                Assert.Fail("Exception of type {0} expected; got exception of type {1}", typeof(TException).Name, ex.GetType().Name);
+                Assert.Fail("Exception of type {0} expected but instead got an exception of type {1}", typeof(TException).Name, ex.GetType().Name);
             }
         }
     }
