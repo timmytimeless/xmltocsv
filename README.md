@@ -1,4 +1,4 @@
-# xmltocsv
+# XML to CSV converter
 <div class="wikidoc">
 
 **Project Description**  
