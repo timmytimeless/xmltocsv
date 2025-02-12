@@ -6,7 +6,7 @@ This project contains an API that you can use to convert XML into comma separate
 
 **Background**
 
-This program was originally authored as part of a software package designed to identify, classify and report on Poor Households in remote areas for the Cambodian Ministry of Planning as part of the [IDPoor project](http://www.mop.gov.kh/Projects/IDPoor/tabid/154/Default.aspx "IDPoor Project ").
+This program was originally authored as part of a software package designed to identify, classify and report on Poor Households in remote areas for the Cambodian Ministry of Planning as part of the [IDPoor project](https://idpoor.gov.kh/en/ "IDPoor Project ").
 
 **Command Line Support**
 
