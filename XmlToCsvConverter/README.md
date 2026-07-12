@@ -1,6 +1,6 @@
 # XML to CSV Converter
 
-XML to CSV Converter is a .NET Framework 4.0 solution for converting XML data into one or more CSV files. It contains a reusable conversion library, a Windows Forms desktop tool, a command line tool, and NUnit tests with sample XML files.
+Timeless.DataConversion is a .NET 10 solution for converting XML data into one or more CSV files. It contains a reusable NuGet-packable conversion library, a command line tool, and NUnit tests with sample XML files.
 
 The main conversion path uses `DataSet.ReadXml` to discover tables in an XML document and export each discovered table to a separate CSV file. The solution also contains an alternate LINQ-to-XML based strategy.
 
@@ -8,17 +8,15 @@ The main conversion path uses `DataSet.ReadXml` to discover tables in an XML doc
 
 | Path | Purpose |
 | --- | --- |
-| `XmlConversionLibrary` | Core conversion library. Contains the conversion strategies and shared execution context. |
-| `XmlToCsvConverter` | Windows Forms application for selecting an XML file, previewing discovered tables and columns, choosing an encoding, and exporting CSV files. |
-| `XmlToCsv.Console` | Command line application for converting an XML file to CSV files in an output directory. |
-| `XmlToCsvTests` | NUnit 3 test project with XML fixtures for conversion behavior and known error cases. |
-| `Documentation/ChangeLog.txt` | Historical change log. |
+| `src/Timeless.DataConversion` | Core conversion library. Contains the conversion strategies and shared execution context. |
+| `src/Timeless.DataConversion.Console` | Command line application for converting an XML file to CSV files in an output directory. |
+| `tests/Timeless.DataConversion.Tests` | NUnit test project with XML fixtures for conversion behavior and known error cases. |
+| `docs/ChangeLog.txt` | Historical change log. |
 
 ## Features
 
 - Converts XML tables to CSV files.
 - Exports each discovered XML table as a separate CSV file.
-- Supports configurable output encodings in the WinForms application.
 - Escapes double quotes in string values for CSV output.
 - Replaces line breaks inside string values before writing CSV rows.
 - Detects duplicate XML table and column naming conflicts.
@@ -27,26 +25,33 @@ The main conversion path uses `DataSet.ReadXml` to discover tables in an XML doc
 
 ## Requirements
 
-- Windows or a compatible environment that can build .NET Framework projects.
-- Visual Studio 2010 or newer with .NET Framework 4.0 targeting support.
-- NUnit 3.6.0 for running the test project. The repository includes the package under `packages/NUnit.3.6.0`.
+- .NET 10 SDK.
+- Visual Studio 2026, Rider, or another IDE with .NET 10 SDK support.
+- NuGet package restore access for test dependencies.
 
 ## Build
 
-Open `XmlToCsvConverter.sln` in Visual Studio and build the solution.
+Open `Timeless.DataConversion.sln` in Rider or Visual Studio and build the solution.
 
-From a Visual Studio Developer Command Prompt, the solution can also be built with MSBuild:
+From the command line, restore and build with the .NET SDK:
 
-```bat
-msbuild XmlToCsvConverter.sln /p:Configuration=Debug
+```sh
+dotnet restore Timeless.DataConversion.sln
+dotnet build Timeless.DataConversion.sln --configuration Release
+```
+
+Create the library NuGet package with:
+
+```sh
+dotnet pack src/Timeless.DataConversion/Timeless.DataConversion.csproj --configuration Release
 ```
 
 ## Command Line Usage
 
-After building `XmlToCsv.Console`, run:
+After building `Timeless.DataConversion.Console`, run:
 
 ```bat
-XmlToCsv.Console.exe -xml C:\path\input.xml -dir C:\path\output
+Timeless.DataConversion.Console.exe -xml C:\path\input.xml -dir C:\path\output
 ```
 
 Arguments:
@@ -59,27 +64,13 @@ Arguments:
 
 The console application writes one CSV file per discovered XML table using the table name as the file name.
 
-## Windows Forms Usage
-
-Build and run the `XmlToCsvConverter` project.
-
-Basic workflow:
-
-1. Select an XML file.
-2. Review the discovered tables and columns.
-3. Choose the desired output encoding.
-4. Select a destination folder.
-5. The application writes CSV files for the discovered tables.
-
-If the XML contains a naming conflict between a table and column, the application can continue by renaming the conflicting table in the generated output.
-
 ## Library Usage
 
 Use `XmlToCsvUsingDataSet` for the main conversion implementation:
 
 ```csharp
 using System.Text;
-using Moor.XmlConversionLibrary.XmlToCsvStrategy;
+using Timeless.DataConversion.XmlToCsvStrategy;
 
 var converter = new XmlToCsvUsingDataSet(@"C:\path\input.xml");
 var context = new XmlToCsvContext(converter);
@@ -98,7 +89,7 @@ var converter = new XmlToCsvUsingDataSet(@"C:\path\input.xml", true);
 
 ## Tests
 
-The tests are in `XmlToCsvTests` and use NUnit 3.
+The tests are in `Timeless.DataConversion.Tests` and use NUnit.
 
 Current coverage includes:
 
@@ -106,27 +97,26 @@ Current coverage includes:
 - LINQ-based conversion.
 - XML attributes.
 - CSV escaping for double quotes.
-- Nested XML structures that throw `InvalidOperationException`.
+- Nested XML structures that throw schema-loading exceptions.
 - Duplicate XML names that throw `DuplicateNameException`.
 - Duplicate XML names with auto-renaming enabled.
 
-The XML fixtures are stored in `XmlToCsvTests/TestData` and are copied to the test output directory during build.
+The XML fixtures are stored in `tests/Timeless.DataConversion.Tests/TestData` and are copied to the test output directory during build.
 
-Run the tests with an NUnit 3-compatible runner against:
+Run the tests with:
 
-```text
-XmlToCsvTests\bin\Debug\XmlToCsvTests.dll
+```sh
+dotnet test tests/Timeless.DataConversion.Tests/Timeless.DataConversion.Tests.csproj --configuration Release
 ```
 
 ## Notes and Limitations
 
-- The project targets .NET Framework 4.0 and uses old-style Visual Studio project files.
+- The projects target .NET 10 and use SDK-style project files.
 - The `DataSet` implementation depends on how `DataSet.ReadXml` infers tables and columns from the XML shape.
 - Deeply nested or ambiguous XML structures can raise framework exceptions during XML loading.
 - The console application currently writes CSV using `Encoding.Unicode`.
-- The WinForms application defaults `Default` and `UTF8` to UTF-8.
 - Generated `bin` and `obj` folders are build outputs and are not needed to understand or modify the source.
 
 ## Historical Context
 
-The solution file contains legacy Team Foundation Server and CodePlex source control metadata. The change log shows the project evolved through GUI improvements, a command line front end, NUnit tests, duplicate name handling, and CSV escaping fixes.
+The change log shows the project evolved through GUI improvements, a command line front end, NUnit tests, duplicate name handling, and CSV escaping fixes. The old Windows desktop projects have been removed; the remaining solution is library, console, and tests only.
