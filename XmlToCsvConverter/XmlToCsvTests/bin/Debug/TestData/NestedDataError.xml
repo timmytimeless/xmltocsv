@@ -13,7 +13,7 @@ attributeFormDefault="unqualified">
       <xs:sequence>
         <xs:element name="Inspector" type="HIP:Inspector" minOccurs="0"
         maxOccurs="unbounded"/>
-        <xs:element name="Address" type="HIP:AddressType" />
+        <xs:element ref="HIP:Address" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>

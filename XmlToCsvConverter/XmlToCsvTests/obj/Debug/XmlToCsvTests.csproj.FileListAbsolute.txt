@@ -14,3 +14,4 @@
 /Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsvTests/obj/Debug/XmlToCsvTests.csproj.CopyComplete
 /Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsvTests/obj/Debug/XmlToCsvTests.dll
 /Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsvTests/obj/Debug/XmlToCsvTests.pdb
+/Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsvTests/bin/Debug/TestData/Test.xsd

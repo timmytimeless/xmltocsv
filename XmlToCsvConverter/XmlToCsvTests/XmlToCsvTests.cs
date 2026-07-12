@@ -51,7 +51,7 @@ namespace XmlToCsvTests
         {
             const string path = @"TestData/NestedDataError.xml";
             TestHelper.Throws<InvalidOperationException>(() => new XmlToCsvUsingDataSet(path),
-                "Nested table 'Contact-Address' which inherits its namespace cannot have multiple parent tables in different namespaces.");
+                "Nested table 'Address' which inherits its namespace cannot have multiple parent tables in different namespaces.");
         }
 
         [Test]
