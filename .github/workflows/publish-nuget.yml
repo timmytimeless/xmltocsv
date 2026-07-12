@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 env:
   PROJECT_PATH: src/Timeless.DataConversion/Timeless.DataConversion.csproj
@@ -44,9 +45,15 @@ jobs:
           --no-build
           --output ${{ env.PACKAGE_OUTPUT }}
 
+      - name: NuGet login
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: Timmytimeless
+
       - name: Publish to NuGet
         run: >
           dotnet nuget push "${{ env.PACKAGE_OUTPUT }}/*.nupkg"
-          --api-key "${{ secrets.NUGET_API_KEY }}"
+          --api-key "${{ steps.login.outputs.NUGET_API_KEY }}"
           --source https://api.nuget.org/v3/index.json
           --skip-duplicate
