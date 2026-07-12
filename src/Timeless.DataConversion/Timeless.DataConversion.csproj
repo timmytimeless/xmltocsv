@@ -8,7 +8,7 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <IsPackable>true</IsPackable>
     <PackageId>Timeless.DataConversion</PackageId>
-    <Version>1.6.0</Version>
+    <Version>2.0.0</Version>
     <Authors>Timeless</Authors>
     <Company>Timeless</Company>
     <Description>API to convert XML data into CSV data.</Description>
