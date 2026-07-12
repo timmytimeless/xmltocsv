@@ -1,0 +1,27 @@
+<?xml version="1.0" standalone="yes"?>
+<DocumentElement>
+  <csvRow attribute="attribute1" attribute2="attribute1.1">
+    <ZIPCode attribute="Zip_attribute1" attribute2="Zip_attribute1.1">10001</ZIPCode>
+    <CityName>James Town</CityName>
+    <StateAbbr>NY</StateAbbr>
+    <Country>USA</Country>
+  </csvRow>
+  <csvRow attribute="attribute2" attribute2="attribute1.2">
+    <ZIPCode attribute="Zip_attribute2" attribute2="Zip_attribute1.2">10002</ZIPCode>
+    <CityName>Abbrevich</CityName>
+    <StateAbbr>CA</StateAbbr>
+    <Country>USA</Country>
+  </csvRow>
+  <csvRow attribute="attribute3" attribute2="attribute1.3">
+    <ZIPCode attribute="Zip_attribute3" attribute2="Zip_attribute1.3">10003</ZIPCode>
+    <CityName>Sommerville</CityName>
+    <StateAbbr>WY</StateAbbr>
+    <Country>USA</Country>
+  </csvRow>
+  <csvRow attribute="attribute4" attribute2="attribute1.4">
+    <ZIPCode attribute="Zip_attribute4" attribute2="Zip_attribute1.4">10004</ZIPCode>
+    <CityName>Loveland</CityName>
+    <StateAbbr>TX</StateAbbr>
+    <Country>USA</Country>
+  </csvRow>
+</DocumentElement>

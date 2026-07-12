@@ -1,0 +1,5 @@
+﻿csvRow_Id,CityName,StateAbbr,Country,attribute,attribute2
+0,"James Town","NY","USA","attribute1","attribute1.1"
+1,"Abbrevich","CA","USA","attribute2","attribute1.2"
+2,"Sommerville","WY","USA","attribute3","attribute1.3"
+3,"Loveland","TX","USA","attribute4","attribute1.4"

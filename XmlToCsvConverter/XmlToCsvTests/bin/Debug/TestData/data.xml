@@ -1,0 +1,27 @@
+<?xml version="1.0" standalone="yes"?>
+<DocumentElement>
+  <csvRow>
+    <ZIPCode>10001</ZIPCode>
+    <CityName>James Town</CityName>
+    <StateAbbr>NY</StateAbbr>
+    <Country>USA</Country>
+  </csvRow>
+  <csvRow>
+    <ZIPCode>10002</ZIPCode>
+    <CityName>Abbrevich</CityName>
+    <StateAbbr>CA</StateAbbr>
+    <Country>USA</Country>
+  </csvRow>
+  <csvRow>
+    <ZIPCode>10003</ZIPCode>
+    <CityName>Sommerville</CityName>
+    <StateAbbr>WY</StateAbbr>
+    <Country>USA</Country>
+  </csvRow>
+  <csvRow>
+    <ZIPCode>10004</ZIPCode>
+    <CityName>Loveland</CityName>
+    <StateAbbr>TX</StateAbbr>
+    <Country>USA</Country>
+  </csvRow>
+</DocumentElement>

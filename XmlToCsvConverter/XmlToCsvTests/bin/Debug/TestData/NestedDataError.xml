@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema
+xmlns:xs="http://www.w3.org/2001/XMLSchema"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xmlns:HIP="DCLG-HIP"
+elementFormDefault="qualified"
+attributeFormDefault="unqualified">
+
+  <xs:import namespace="DCLG-HIP" schemaLocation="Test.xsd"/>
+
+  <xs:element name="InspectorRequest">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Inspector" type="HIP:Inspector" minOccurs="0"
+        maxOccurs="unbounded"/>
+        <xs:element name="Address" type="HIP:AddressType" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

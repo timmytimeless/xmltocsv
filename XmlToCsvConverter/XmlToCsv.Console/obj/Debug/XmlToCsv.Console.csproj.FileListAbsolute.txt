@@ -1,0 +1,9 @@
+/Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsv.Console/bin/Debug/XmlToCsv.Console.exe
+/Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsv.Console/bin/Debug/XmlToCsv.Console.pdb
+/Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsv.Console/bin/Debug/Moor.XmlConversionLibrary.dll
+/Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsv.Console/bin/Debug/Moor.XmlConversionLibrary.pdb
+/Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsv.Console/obj/Debug/XmlToCsv.Console.csproj.AssemblyReference.cache
+/Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsv.Console/obj/Debug/XmlToCsv.Console.csproj.CoreCompileInputs.cache
+/Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsv.Console/obj/Debug/XmlToCsv.Console.csproj.CopyComplete
+/Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsv.Console/obj/Debug/XmlToCsv.Console.exe
+/Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsv.Console/obj/Debug/XmlToCsv.Console.pdb

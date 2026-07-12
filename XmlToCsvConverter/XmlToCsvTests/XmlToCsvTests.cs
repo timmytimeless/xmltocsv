@@ -6,7 +6,6 @@ using NUnit.Framework;
 
 namespace XmlToCsvTests
 {
-
     public class XmlToCsvTests
     {
         [Test]

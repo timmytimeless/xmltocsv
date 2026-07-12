@@ -1,0 +1,16 @@
+/Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsvTests/bin/Debug/TestData/DataWithAttributes.xml
+/Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsvTests/bin/Debug/TestData/DoubleQuoteEscape.xml
+/Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsvTests/bin/Debug/TestData/ErrorDuplicateName.xml
+/Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsvTests/bin/Debug/TestData/data.xml
+/Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsvTests/bin/Debug/TestData/NestedDataError.xml
+/Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsvTests/bin/Debug/XmlToCsvTests.dll
+/Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsvTests/bin/Debug/XmlToCsvTests.pdb
+/Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsvTests/bin/Debug/Moor.XmlConversionLibrary.dll
+/Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsvTests/bin/Debug/nunit.framework.dll
+/Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsvTests/bin/Debug/Moor.XmlConversionLibrary.pdb
+/Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsvTests/bin/Debug/nunit.framework.xml
+/Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsvTests/obj/Debug/XmlToCsvTests.csproj.AssemblyReference.cache
+/Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsvTests/obj/Debug/XmlToCsvTests.csproj.CoreCompileInputs.cache
+/Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsvTests/obj/Debug/XmlToCsvTests.csproj.CopyComplete
+/Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsvTests/obj/Debug/XmlToCsvTests.dll
+/Users/timvanderschaaf/RiderProjects/Timeless/xmltocsv/XmlToCsvConverter/XmlToCsvTests/obj/Debug/XmlToCsvTests.pdb
