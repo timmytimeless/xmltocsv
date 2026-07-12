@@ -1,0 +1,59 @@
+name: Publish NuGet
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  PROJECT_PATH: src/Timeless.DataConversion/Timeless.DataConversion.csproj
+  PACKAGE_OUTPUT: ./artifacts/packages
+  DOTNET_VERSION: "10.0.x"
+
+jobs:
+  publish:
+    name: Build, pack, and publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore Timeless.DataConversion.sln
+
+      - name: Build
+        run: dotnet build Timeless.DataConversion.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test Timeless.DataConversion.sln --configuration Release --no-build --verbosity normal
+
+      - name: Pack
+        run: >
+          dotnet pack ${{ env.PROJECT_PATH }}
+          --configuration Release
+          --no-build
+          --output ${{ env.PACKAGE_OUTPUT }}
+
+      - name: NuGet login
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: Timmytimeless
+
+      - name: Publish to NuGet
+        run: >
+          dotnet nuget push "${{ env.PACKAGE_OUTPUT }}/*.nupkg"
+          --api-key "${{ steps.login.outputs.NUGET_API_KEY }}"
+          --source https://api.nuget.org/v3/index.json
+          --skip-duplicate
