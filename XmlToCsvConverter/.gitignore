@@ -1,0 +1,39 @@
+# Build outputs
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio cache and user files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.rsuser
+*.sln.DotSettings.user
+
+# Rider / JetBrains user files
+.idea/
+*.DotSettings.user
+
+# Test results and coverage
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+coverage/
+
+# NuGet generated artifacts
+*.nupkg
+packages/*
+!packages/repositories.config
+!packages/**/packages.config
+
+# Build logs and temporary files
+*.log
+*.tmp
+*.temp
+*.cache
+
+# OS metadata
+.DS_Store
+Thumbs.db
