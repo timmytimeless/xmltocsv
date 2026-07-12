@@ -21,8 +21,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XmlToCsv.Console", "XmlToCsv.Console\XmlToCsv.Console.csproj", "{89C09FF2-868B-495D-B372-919D3A4B417C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XmlToCsv.WpfApp", "XmlToCsv.WpfApp\XmlToCsv.WpfApp.csproj", "{69CF25F6-C3FC-4491-85D2-2BA0F8778B15}"
-EndProject
 Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
 		SccNumberOfProjects = 6
@@ -97,16 +95,6 @@ Global
 		{89C09FF2-868B-495D-B372-919D3A4B417C}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{89C09FF2-868B-495D-B372-919D3A4B417C}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{89C09FF2-868B-495D-B372-919D3A4B417C}.Release|x86.ActiveCfg = Release|Any CPU
-		{69CF25F6-C3FC-4491-85D2-2BA0F8778B15}.Debug|Any CPU.ActiveCfg = Debug|x86
-		{69CF25F6-C3FC-4491-85D2-2BA0F8778B15}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
-		{69CF25F6-C3FC-4491-85D2-2BA0F8778B15}.Debug|Mixed Platforms.Build.0 = Debug|x86
-		{69CF25F6-C3FC-4491-85D2-2BA0F8778B15}.Debug|x86.ActiveCfg = Debug|x86
-		{69CF25F6-C3FC-4491-85D2-2BA0F8778B15}.Debug|x86.Build.0 = Debug|x86
-		{69CF25F6-C3FC-4491-85D2-2BA0F8778B15}.Release|Any CPU.ActiveCfg = Release|x86
-		{69CF25F6-C3FC-4491-85D2-2BA0F8778B15}.Release|Mixed Platforms.ActiveCfg = Release|x86
-		{69CF25F6-C3FC-4491-85D2-2BA0F8778B15}.Release|Mixed Platforms.Build.0 = Release|x86
-		{69CF25F6-C3FC-4491-85D2-2BA0F8778B15}.Release|x86.ActiveCfg = Release|x86
-		{69CF25F6-C3FC-4491-85D2-2BA0F8778B15}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
