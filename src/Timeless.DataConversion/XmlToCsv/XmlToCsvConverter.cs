@@ -134,6 +134,60 @@ public sealed class XmlToCsvConverter : IDisposable
         return new XmlTablePlanInferer().InferTables(profile);
     }
 
+    public static XmlConversionPreview CreateConversionPreview(string xmlSourceFilePath)
+    {
+        XmlInferredTablePlan plan = InferTablePlan(xmlSourceFilePath);
+        return new XmlConversionPreviewBuilder().Build(plan);
+    }
+
+    public static XmlInferredTablePlan ConfirmConversionPlan(XmlConversionPreview preview, XmlConversionPlanConfirmation confirmation)
+    {
+        if (preview == null)
+        {
+            throw new ArgumentNullException(nameof(preview));
+        }
+
+        if (confirmation == null)
+        {
+            throw new ArgumentNullException(nameof(confirmation));
+        }
+
+        var confirmationsByPath = confirmation.Tables.ToDictionary(item => item.Path);
+        var confirmedTablesByPath = new Dictionary<string, XmlInferredTable>();
+
+        foreach (XmlInferredTable sourceTable in preview.InferredPlan.Tables)
+        {
+            if (!confirmationsByPath.TryGetValue(sourceTable.Path, out XmlTablePlanConfirmation tableConfirmation) ||
+                !tableConfirmation.Include)
+            {
+                continue;
+            }
+
+            XmlInferredTable confirmedTable = CreateConfirmedTable(sourceTable, tableConfirmation);
+            confirmedTablesByPath.Add(confirmedTable.Path, confirmedTable);
+        }
+
+        foreach (XmlInferredTable sourceTable in preview.InferredPlan.Tables)
+        {
+            if (!confirmedTablesByPath.TryGetValue(sourceTable.Path, out XmlInferredTable confirmedTable))
+            {
+                continue;
+            }
+
+            foreach (XmlInferredTable sourceChildTable in sourceTable.ChildTables)
+            {
+                if (confirmedTablesByPath.TryGetValue(sourceChildTable.Path, out XmlInferredTable confirmedChildTable))
+                {
+                    confirmedTable.AddChildTable(confirmedChildTable);
+                }
+            }
+        }
+
+        return new XmlInferredTablePlan(preview.InferredPlan.Tables
+            .Where(item => confirmedTablesByPath.ContainsKey(item.Path))
+            .Select(item => confirmedTablesByPath[item.Path]));
+    }
+
     public static void ExportInferredTables(string xmlSourceFilePath, string destinationDirectory, Encoding encoding)
     {
         XmlInferredTablePlan plan = InferTablePlan(xmlSourceFilePath);
@@ -236,6 +290,39 @@ public sealed class XmlToCsvConverter : IDisposable
         var fs = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None);
         var sw = new StreamWriter(fs, encoding);
         return sw;
+    }
+
+    private static XmlInferredTable CreateConfirmedTable(XmlInferredTable sourceTable, XmlTablePlanConfirmation tableConfirmation)
+    {
+        var columnConfirmationsByPath = tableConfirmation.Columns.ToDictionary(item => item.Path);
+
+        IEnumerable<XmlInferredColumn> columns = sourceTable.Columns
+            .Where(column => !columnConfirmationsByPath.TryGetValue(column.Path, out XmlColumnPlanConfirmation columnConfirmation) ||
+                             columnConfirmation.Include)
+            .Select(column => CreateConfirmedColumn(column, columnConfirmationsByPath));
+
+        string tableName = string.IsNullOrWhiteSpace(tableConfirmation.Name) ? sourceTable.Name : tableConfirmation.Name;
+
+        return new XmlInferredTable(
+            sourceTable.Path,
+            tableName,
+            sourceTable.RowCount,
+            sourceTable.Score,
+            columns,
+            sourceTable.Reasons);
+    }
+
+    private static XmlInferredColumn CreateConfirmedColumn(
+        XmlInferredColumn sourceColumn,
+        Dictionary<string, XmlColumnPlanConfirmation> columnConfirmationsByPath)
+    {
+        if (columnConfirmationsByPath.TryGetValue(sourceColumn.Path, out XmlColumnPlanConfirmation columnConfirmation) &&
+            !string.IsNullOrWhiteSpace(columnConfirmation.Name))
+        {
+            return new XmlInferredColumn(sourceColumn.Path, columnConfirmation.Name, sourceColumn.TypeHint);
+        }
+
+        return sourceColumn;
     }
 
     private bool TryExportUsingXmlReader(DataTable table, string destinationPath, Encoding encoding)
