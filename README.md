@@ -67,24 +67,24 @@ The console application writes one CSV file per discovered XML table using the t
 
 ## Library Usage
 
-Use `XmlToCsvUsingDataSet` for the main conversion implementation:
+Use `XmlToCsvConverter` for the main conversion implementation:
 
 ```csharp
 using System.Text;
 using Timeless.DataConversion.XmlToCsv;
 
-using var converter = new XmlToCsvUsingDataSet(@"C:\path\input.xml");
+using var converter = new XmlToCsvConverter(@"C:\path\input.xml");
 
-foreach (string tableName in converter.TableNameCollection)
+foreach (string tableName in converter.TableNames)
 {
-    converter.ExportToCsv(tableName, @"C:\path\output\" + tableName + ".csv", Encoding.UTF8);
+    converter.Export(tableName, @"C:\path\output\" + tableName + ".csv", Encoding.UTF8);
 }
 ```
 
 To allow automatic renaming when the XML has duplicate table and column names:
 
 ```csharp
-var converter = new XmlToCsvUsingDataSet(@"C:\path\input.xml", true);
+var converter = new XmlToCsvConverter(@"C:\path\input.xml", true);
 ```
 
 ## Tests

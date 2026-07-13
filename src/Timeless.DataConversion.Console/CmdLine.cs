@@ -7,7 +7,7 @@ namespace Timeless.DataConversion.Console
     /// <summary>
     /// Represents an error occuring during command line parsing.
     /// </summary>
-    public class CmdLineException : Exception
+    internal class CmdLineException : Exception
     {
         public CmdLineException(string parameter, string message)
             :
@@ -26,7 +26,7 @@ namespace Timeless.DataConversion.Console
     /// Parameters are words in the command line beginning with a hyphen (-).
     /// The value of the parameter is the next word in
     /// </summary>
-    public class CmdLineParameter
+    internal class CmdLineParameter
     {
         private string _name;
         private string _value = "";
@@ -101,7 +101,7 @@ namespace Timeless.DataConversion.Console
     /// <summary>
     /// Represents an integer command line parameter. 
     /// </summary>
-    public class CmdLineInt : CmdLineParameter
+    internal class CmdLineInt : CmdLineParameter
     {
         private int _min = int.MinValue;
         private int _max = int.MaxValue;
@@ -176,7 +176,7 @@ namespace Timeless.DataConversion.Console
     /// <summary>
     /// Represents an string command line parameter.
     /// </summary>
-    public class CmdLineString : CmdLineParameter
+    internal class CmdLineString : CmdLineParameter
     {
         public CmdLineString(string name, bool required, string helpMessage)
             : base(name, required, helpMessage)
@@ -192,7 +192,7 @@ namespace Timeless.DataConversion.Console
     /// <summary>
     /// Provides a simple strongly typed interface to work with command line parameters.
     /// </summary>
-    public class CmdLine
+    internal class CmdLine
     {
 
         // A private dictionary containing the parameters.
@@ -329,7 +329,7 @@ namespace Timeless.DataConversion.Console
     /// The -help parameter will be registered automatically.
     /// Any errors will be written to the console instead of generating exceptions.
     /// </summary>
-    public class ConsoleCmdLine : CmdLine
+    internal class ConsoleCmdLine : CmdLine
     {
         public ConsoleCmdLine()
         {

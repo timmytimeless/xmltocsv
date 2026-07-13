@@ -16,11 +16,11 @@ namespace Timeless.DataConversion.Tests
         public void DataSetImplementationTest()
         {
             const string path = @"TestData/data.xml";
-            using var converter = new XmlToCsvUsingDataSet(path);
-            Assert.That(converter.TableNameCollection.Count, Is.EqualTo(1));
-            foreach (var xmlTableName in converter.TableNameCollection)
+            using var converter = new XmlToCsvConverter(path);
+            Assert.That(converter.TableNames.Count, Is.EqualTo(1));
+            foreach (var tableName in converter.TableNames)
             {
-                converter.ExportToCsv(xmlTableName, @"dataDataSet_" + xmlTableName + ".csv", Encoding.Default);
+                converter.Export(tableName, @"dataDataSet_" + tableName + ".csv", Encoding.Default);
             }
         }
 
@@ -28,12 +28,12 @@ namespace Timeless.DataConversion.Tests
         public void CanReadAttributeTest()
         {
             const string path = @"TestData/DataWithAttributes.xml";
-            using var converter = new XmlToCsvUsingDataSet(path);
-            Assert.That(converter.TableNameCollection.Count, Is.EqualTo(2));
+            using var converter = new XmlToCsvConverter(path);
+            Assert.That(converter.TableNames.Count, Is.EqualTo(2));
 
-            foreach (var xmlTableName in converter.TableNameCollection)
+            foreach (var tableName in converter.TableNames)
             {
-                converter.ExportToCsv(xmlTableName, @"TestData/dataDataSet_" + xmlTableName + ".csv", Encoding.Default);
+                converter.Export(tableName, @"TestData/dataDataSet_" + tableName + ".csv", Encoding.Default);
             }
         }
 
@@ -41,12 +41,12 @@ namespace Timeless.DataConversion.Tests
         public void DoubleQuoteEscapeTest()
         {
             const string path = @"TestData/DoubleQuoteEscape.xml";
-            using var converter = new XmlToCsvUsingDataSet(path);
-            Assert.That(converter.TableNameCollection.Count, Is.EqualTo(1));
+            using var converter = new XmlToCsvConverter(path);
+            Assert.That(converter.TableNames.Count, Is.EqualTo(1));
 
-            foreach (var xmlTableName in converter.TableNameCollection)
+            foreach (var tableName in converter.TableNames)
             {
-                converter.ExportToCsv(xmlTableName, string.Format(@"TestData/dataDataSet_{0}.csv", xmlTableName), Encoding.Default);
+                converter.Export(tableName, string.Format(@"TestData/dataDataSet_{0}.csv", tableName), Encoding.Default);
             }
         }
 
@@ -54,7 +54,7 @@ namespace Timeless.DataConversion.Tests
         public void XmlSchemaNestedTableExceptionTest()
         {
             const string path = @"TestData/NestedDataError.xml";
-            TestHelper.Throws<XmlSchemaException>(() => new XmlToCsvUsingDataSet(path),
+            TestHelper.Throws<XmlSchemaException>(() => new XmlToCsvConverter(path),
                 "Type 'DCLG-HIP:Inspector' is not declared.");
         }
 
@@ -62,19 +62,19 @@ namespace Timeless.DataConversion.Tests
         public void DuplicateNameErrorTest()
         {
             const string path = @"TestData/ErrorDuplicateName.xml";
-            TestHelper.Throws<DuplicateNameException>(() => new XmlToCsvUsingDataSet(path), "A column named 'Employees' already belongs to this DataTable: cannot set a nested table name to the same name.");
+            TestHelper.Throws<DuplicateNameException>(() => new XmlToCsvConverter(path), "A column named 'Employees' already belongs to this DataTable: cannot set a nested table name to the same name.");
         }
 
         [Test]
         public void DuplicateNameRenamedTest()
         {
             const string path = @"TestData/ErrorDuplicateName.xml";
-            using var converter = new XmlToCsvUsingDataSet(path, true);
-            Assert.That(converter.TableNameCollection.Count, Is.EqualTo(2));
+            using var converter = new XmlToCsvConverter(path, true);
+            Assert.That(converter.TableNames.Count, Is.EqualTo(2));
 
-            foreach (var xmlTableName in converter.TableNameCollection)
+            foreach (var tableName in converter.TableNames)
             {
-                converter.ExportToCsv(xmlTableName, @"ErrorDuplicateName_" + xmlTableName + ".csv", Encoding.Default);
+                converter.Export(tableName, @"ErrorDuplicateName_" + tableName + ".csv", Encoding.Default);
             }
         }
 
@@ -186,10 +186,10 @@ namespace Timeless.DataConversion.Tests
                 "<?xml version=\"1.0\"?><root><row><Name>Yalta</Name></row></root>");
             string csvPath = Path.Combine(TestContext.CurrentContext.WorkDirectory, Path.GetRandomFileName() + ".csv");
 
-            using (var converter = new XmlToCsvUsingDataSet(xmlPath))
+            using (var converter = new XmlToCsvConverter(xmlPath))
             {
-                converter.XmlDataSet.Tables["row"].Columns["Name"].ColumnName = "Display,Name";
-                converter.ExportToCsv("row", csvPath, Encoding.UTF8);
+                converter.DataSet.Tables["row"].Columns["Name"].ColumnName = "Display,Name";
+                converter.Export("row", csvPath, Encoding.UTF8);
             }
 
             string header = File.ReadLines(csvPath).First();
@@ -277,23 +277,23 @@ namespace Timeless.DataConversion.Tests
                 "\"first\\nsecond\"" + Environment.NewLine));
         }
 
-        private static string ConvertSingleTableToCsv(string xmlPath, string xmlTableName, Encoding encoding)
+        private static string ConvertSingleTableToCsv(string xmlPath, string tableName, Encoding encoding)
         {
             string csvPath = Path.Combine(TestContext.CurrentContext.WorkDirectory, Path.GetRandomFileName() + ".csv");
-            using (var converter = new XmlToCsvUsingDataSet(xmlPath))
+            using (var converter = new XmlToCsvConverter(xmlPath))
             {
-                converter.ExportToCsv(xmlTableName, csvPath, encoding);
+                converter.Export(tableName, csvPath, encoding);
             }
 
             return csvPath;
         }
 
-        private static string ConvertSingleTableToCsvUsingStreaming(string xmlPath, string xmlTableName, Encoding encoding)
+        private static string ConvertSingleTableToCsvUsingStreaming(string xmlPath, string tableName, Encoding encoding)
         {
             string csvPath = Path.Combine(TestContext.CurrentContext.WorkDirectory, Path.GetRandomFileName() + ".csv");
-            using (var converter = XmlToCsvUsingDataSet.CreateForStreamingExport(xmlPath))
+            using (var converter = XmlToCsvConverter.CreateStreaming(xmlPath))
             {
-                converter.ExportToCsv(xmlTableName, csvPath, encoding);
+                converter.Export(tableName, csvPath, encoding);
             }
 
             return csvPath;

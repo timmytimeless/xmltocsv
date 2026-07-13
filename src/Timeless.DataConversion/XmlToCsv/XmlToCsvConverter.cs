@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Data;
 using System.IO;
 using System.Linq;
@@ -10,64 +9,65 @@ using System.Xml.Linq;
 
 namespace Timeless.DataConversion.XmlToCsv
 {
-    public class XmlToCsvUsingDataSet : IDisposable
+    public sealed class XmlToCsvConverter : IDisposable
     {
         private readonly bool _preferStreamingExport;
+        private readonly List<string> _tableNames;
         private readonly string _xmlSourceFilePath;
         private bool _isDataLoaded;
 
-        public XmlToCsvUsingDataSet(string xmlSourceFilePath)
+        public XmlToCsvConverter(string xmlSourceFilePath)
             : this(xmlSourceFilePath, false)
         {
 
         }
 
-        public XmlToCsvUsingDataSet(string xmlSourceFilePath, bool autoRenameWhenNamingConflict)
-            : this(xmlSourceFilePath, autoRenameWhenNamingConflict, false)
+        public XmlToCsvConverter(string xmlSourceFilePath, bool renameConflictingTables)
+            : this(xmlSourceFilePath, renameConflictingTables, false)
         {
 
         }
 
-        private XmlToCsvUsingDataSet(string xmlSourceFilePath, bool autoRenameWhenNamingConflict, bool preferStreamingExport)
+        private XmlToCsvConverter(string xmlSourceFilePath, bool renameConflictingTables, bool preferStreamingExport)
         {
             _xmlSourceFilePath = xmlSourceFilePath;
             _preferStreamingExport = preferStreamingExport;
-            TableNameCollection = new Collection<string>();
-            XmlDataSet = new DataSet();
+            _tableNames = new List<string>();
+            DataSet = new System.Data.DataSet();
 
             if (preferStreamingExport)
             {
-                XmlDataSet.InferXmlSchema(xmlSourceFilePath, null);
-                PopulateTableNameCollection();
+                DataSet.InferXmlSchema(xmlSourceFilePath, null);
+                PopulateTableNames();
                 return;
             }
 
-            LoadData(xmlSourceFilePath, autoRenameWhenNamingConflict);
+            LoadData(xmlSourceFilePath, renameConflictingTables);
         }
 
-        public static XmlToCsvUsingDataSet CreateForStreamingExport(string xmlSourceFilePath)
+        public static XmlToCsvConverter CreateStreaming(string xmlSourceFilePath)
         {
-            return new XmlToCsvUsingDataSet(xmlSourceFilePath, false, true);
+            return new XmlToCsvConverter(xmlSourceFilePath, false, true);
         }
 
-        private void LoadData(string xmlSourceFilePath, bool autoRenameWhenNamingConflict)
+        private void LoadData(string xmlSourceFilePath, bool renameConflictingTables)
         {
-            TableNameCollection.Clear();
+            _tableNames.Clear();
 
             try
             {
-                XmlDataSet.ReadXml(xmlSourceFilePath);
+                DataSet.ReadXml(xmlSourceFilePath);
                 _isDataLoaded = true;
-                PopulateTableNameCollection();
+                PopulateTableNames();
             }
             catch (DuplicateNameException)
             {
-                if (autoRenameWhenNamingConflict)
+                if (renameConflictingTables)
                 {
-                    XmlDataSet.ReadXml(xmlSourceFilePath, XmlReadMode.IgnoreSchema);
+                    DataSet.ReadXml(xmlSourceFilePath, XmlReadMode.IgnoreSchema);
                     _isDataLoaded = true;
 
-                    PopulateTableNameCollection();
+                    PopulateTableNames();
                     RenameDuplicateColumn();
                 }
                 else
@@ -77,16 +77,19 @@ namespace Timeless.DataConversion.XmlToCsv
             }
         }
 
-        private void PopulateTableNameCollection()
+        private void PopulateTableNames()
         {
-            foreach (DataTable table in XmlDataSet.Tables)
+            foreach (DataTable table in DataSet.Tables)
             {
-                TableNameCollection.Add(table.TableName);
+                _tableNames.Add(table.TableName);
             }
         }
 
-        public DataSet XmlDataSet { get; private set; }
-        public Collection<string> TableNameCollection { get; private set; }
+        internal DataSet DataSet { get; private set; }
+        public IReadOnlyList<string> TableNames
+        {
+            get { return _tableNames; }
+        }
 
         /// <summary>
         /// Check for duplicates names in XML. Rename the table in case a clash with a column name is found.
@@ -94,31 +97,31 @@ namespace Timeless.DataConversion.XmlToCsv
         /// <returns>True if a duplicate XML name was found and renames the name clash. Otherwise returns false.</returns>
         private void RenameDuplicateColumn()
         {
-            foreach (DataTable table in XmlDataSet.Tables)
+            foreach (DataTable table in DataSet.Tables)
             {
-                bool hasDuplicate = XmlDataSet.Tables[0].Columns.Contains(table.TableName);
+                bool hasDuplicate = DataSet.Tables[0].Columns.Contains(table.TableName);
 
                 if (hasDuplicate)
                 {
-                    TableNameCollection.Remove(table.TableName);
-                    TableNameCollection.Add(table.TableName + "_Renamed");
+                    _tableNames.Remove(table.TableName);
+                    _tableNames.Add(table.TableName + "_Renamed");
                     table.TableName = table.TableName + "_Renamed";
                 }
             }
         }
 
-        public void ExportToCsv(string xmlTableName, string csvDestinationFilePath, Encoding encoding)
+        public void Export(string tableName, string destinationPath, Encoding encoding)
         {
-            DataTable table = GetTableToExport(xmlTableName);
+            DataTable table = GetTableToExport(tableName);
 
-            if (_preferStreamingExport && TryExportToCsvUsingXmlReader(table, csvDestinationFilePath, encoding))
+            if (_preferStreamingExport && TryExportUsingXmlReader(table, destinationPath, encoding))
             {
                 return;
             }
 
             EnsureDataLoaded();
-            table = GetTableToExport(xmlTableName);
-            StreamWriter sw = CreateStreamWriter(csvDestinationFilePath, encoding);
+            table = GetTableToExport(tableName);
+            StreamWriter sw = CreateStreamWriter(destinationPath, encoding);
 
             using (sw)
             {
@@ -141,32 +144,32 @@ namespace Timeless.DataConversion.XmlToCsv
                 return;
             }
 
-            XmlDataSet.Clear();
+            DataSet.Clear();
             LoadData(_xmlSourceFilePath, false);
         }
 
-        private DataTable GetTableToExport(string xmlTableName)
+        private DataTable GetTableToExport(string tableName)
         {
-            if (string.IsNullOrEmpty(xmlTableName))
+            if (string.IsNullOrEmpty(tableName))
             {
                 throw new NotSupportedException("Table name for table to export is not specified");
             }
 
-            return XmlDataSet.Tables[xmlTableName];
+            return DataSet.Tables[tableName];
         }
 
-        private StreamWriter CreateStreamWriter(string csvDestinationFilePath, Encoding encoding)
+        private StreamWriter CreateStreamWriter(string destinationPath, Encoding encoding)
         {
-            var fs = new FileStream(csvDestinationFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
+            var fs = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None);
             var sw = new StreamWriter(fs, encoding);
             return sw;
         }
 
-        private bool TryExportToCsvUsingXmlReader(DataTable table, string csvDestinationFilePath, Encoding encoding)
+        private bool TryExportUsingXmlReader(DataTable table, string destinationPath, Encoding encoding)
         {
             using XmlReader reader = XmlReader.Create(_xmlSourceFilePath);
             StreamWriter sw = null;
-            CsvColumnBinding[] bindings = null;
+            ColumnBinding[] bindings = null;
 
             while (!reader.EOF)
             {
@@ -191,7 +194,7 @@ namespace Timeless.DataConversion.XmlToCsv
                         return false;
                     }
 
-                    sw = CreateStreamWriter(csvDestinationFilePath, encoding);
+                    sw = CreateStreamWriter(destinationPath, encoding);
                     WriteHeaderToCsv(sw, table.Columns);
                 }
 
@@ -208,9 +211,9 @@ namespace Timeless.DataConversion.XmlToCsv
             return bindings != null;
         }
 
-        private static CsvColumnBinding[] CreateColumnBindings(DataColumnCollection columns, XElement row)
+        private static ColumnBinding[] CreateColumnBindings(DataColumnCollection columns, XElement row)
         {
-            var bindings = new CsvColumnBinding[columns.Count];
+            var bindings = new ColumnBinding[columns.Count];
 
             for (int i = 0; i < columns.Count; i++)
             {
@@ -219,7 +222,7 @@ namespace Timeless.DataConversion.XmlToCsv
 
                 if (attribute != null)
                 {
-                    bindings[i] = new CsvColumnBinding(columnName, true);
+                    bindings[i] = new ColumnBinding(columnName, true);
                     continue;
                 }
 
@@ -227,7 +230,7 @@ namespace Timeless.DataConversion.XmlToCsv
 
                 if (element != null && !element.HasElements)
                 {
-                    bindings[i] = new CsvColumnBinding(columnName, false);
+                    bindings[i] = new ColumnBinding(columnName, false);
                     continue;
                 }
 
@@ -242,7 +245,7 @@ namespace Timeless.DataConversion.XmlToCsv
             return row.Elements().Any(element => element.HasElements);
         }
 
-        private static void WriteStreamingRow(StreamWriter sw, CsvColumnBinding[] bindings, XElement row)
+        private static void WriteStreamingRow(StreamWriter sw, ColumnBinding[] bindings, XElement row)
         {
             for (int i = 0; i < bindings.Length; i++)
             {
@@ -250,16 +253,6 @@ namespace Timeless.DataConversion.XmlToCsv
             }
 
             sw.WriteLine();
-        }
-
-        [Obsolete("Use XmlDataSet.Tables[xmlTableName].Columns instead.")]
-        public List<DataColumn> GetColumnList(string xmlSourceFilePath, string xmlTableName)
-        {
-            //var ds = new DataSet("ds");
-            //ds.ReadXml(xmlSourceFilePath);
-            //var dt = XmlDataSet.Tables[xmlTableName];
-            List<DataColumn> list = XmlDataSet.Tables[xmlTableName].Columns.Cast<DataColumn>().ToList();
-            return list;
         }
 
         private void WriteRowToCsv(StreamWriter sw, DataRow row, DataColumnCollection columns)
@@ -346,18 +339,18 @@ namespace Timeless.DataConversion.XmlToCsv
             }
         }
 
-        private sealed class CsvColumnBinding
+        private sealed class ColumnBinding
         {
             private readonly string _name;
             private readonly bool _isAttribute;
 
-            public CsvColumnBinding(string name, bool isAttribute)
+            internal ColumnBinding(string name, bool isAttribute)
             {
                 _name = name;
                 _isAttribute = isAttribute;
             }
 
-            public string GetValue(XElement row)
+            internal string GetValue(XElement row)
             {
                 if (_isAttribute)
                 {
@@ -370,16 +363,7 @@ namespace Timeless.DataConversion.XmlToCsv
 
         public void Dispose()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                XmlDataSet.Dispose();
-            }
+            DataSet.Dispose();
         }
     }
 }

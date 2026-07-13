@@ -20,19 +20,19 @@ namespace Timeless.DataConversion.Tests
             WriteLargeFlatXml(xmlPath, RowCount);
 
             Stopwatch loadTimer = Stopwatch.StartNew();
-            using var converter = new XmlToCsvUsingDataSet(xmlPath);
+            using var converter = new XmlToCsvConverter(xmlPath);
             loadTimer.Stop();
 
             Stopwatch exportTimer = Stopwatch.StartNew();
-            converter.ExportToCsv("row", csvPath, Encoding.UTF8);
+            converter.Export("row", csvPath, Encoding.UTF8);
             exportTimer.Stop();
 
             Stopwatch streamingSchemaTimer = Stopwatch.StartNew();
-            using var streamingConverter = XmlToCsvUsingDataSet.CreateForStreamingExport(xmlPath);
+            using var streamingConverter = XmlToCsvConverter.CreateStreaming(xmlPath);
             streamingSchemaTimer.Stop();
 
             Stopwatch streamingExportTimer = Stopwatch.StartNew();
-            streamingConverter.ExportToCsv("row", streamingCsvPath, Encoding.UTF8);
+            streamingConverter.Export("row", streamingCsvPath, Encoding.UTF8);
             streamingExportTimer.Stop();
 
             long csvSize = new FileInfo(csvPath).Length;
@@ -46,8 +46,8 @@ namespace Timeless.DataConversion.Tests
             TestContext.Out.WriteLine("Streaming schema ms: {0}", streamingSchemaTimer.ElapsedMilliseconds);
             TestContext.Out.WriteLine("Streaming export ms: {0}", streamingExportTimer.ElapsedMilliseconds);
 
-            Assert.That(converter.TableNameCollection, Does.Contain("row"));
-            Assert.That(streamingConverter.TableNameCollection, Does.Contain("row"));
+            Assert.That(converter.TableNames, Does.Contain("row"));
+            Assert.That(streamingConverter.TableNames, Does.Contain("row"));
             Assert.That(csvSize, Is.GreaterThan(0));
             Assert.That(streamingCsvSize, Is.EqualTo(csvSize));
         }

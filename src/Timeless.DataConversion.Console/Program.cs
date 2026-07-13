@@ -24,19 +24,19 @@ namespace Timeless.DataConversion.Console
             cmd.Parse(args);
 
             Encoding encoding = ResolveOutputEncoding(outputEncoding);
-            using var converter = XmlToCsvUsingDataSet.CreateForStreamingExport(xmlInputFilePath.Value);
+            using var converter = XmlToCsvConverter.CreateStreaming(xmlInputFilePath.Value);
             
-            foreach (string xmlTableName in converter.TableNameCollection)
+            foreach (string tableName in converter.TableNames)
             {
-                var csvDestinationFilePath = BuildCsvDestinationFilePath(outputDirectory.Value, xmlTableName);
+                var destinationPath = BuildCsvDestinationFilePath(outputDirectory.Value, tableName);
                 
-                converter.ExportToCsv(xmlTableName, csvDestinationFilePath, encoding);
+                converter.Export(tableName, destinationPath, encoding);
             }
         }
 
-        internal static string BuildCsvDestinationFilePath(string outputDirectory, string xmlTableName)
+        internal static string BuildCsvDestinationFilePath(string outputDirectory, string tableName)
         {
-            return Path.Combine(outputDirectory, xmlTableName + ".csv");
+            return Path.Combine(outputDirectory, tableName + ".csv");
         }
 
         internal static Encoding ResolveOutputEncoding(CmdLineString outputEncoding)
