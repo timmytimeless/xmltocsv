@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml.Schema;
-using Timeless.DataConversion.XmlToCsvStrategy;
+using Timeless.DataConversion.XmlToCsv;
 using ConsoleProgram = Timeless.DataConversion.Console.Program;
 using NUnit.Framework;
 
@@ -16,11 +16,11 @@ namespace Timeless.DataConversion.Tests
         public void DataSetImplementationTest()
         {
             const string path = @"TestData/data.xml";
-            var context = new XmlToCsvContext(new XmlToCsvUsingDataSet(path));
-            Assert.That(context.Strategy.TableNameCollection.Count, Is.EqualTo(1));
-            foreach (var xmlTableName in context.Strategy.TableNameCollection)
+            using var converter = new XmlToCsvUsingDataSet(path);
+            Assert.That(converter.TableNameCollection.Count, Is.EqualTo(1));
+            foreach (var xmlTableName in converter.TableNameCollection)
             {
-                context.Execute(xmlTableName, @"dataDataSet_" + xmlTableName + ".csv", Encoding.Default);
+                converter.ExportToCsv(xmlTableName, @"dataDataSet_" + xmlTableName + ".csv", Encoding.Default);
             }
         }
 
@@ -28,12 +28,12 @@ namespace Timeless.DataConversion.Tests
         public void CanReadAttributeTest()
         {
             const string path = @"TestData/DataWithAttributes.xml";
-            var context = new XmlToCsvContext(new XmlToCsvUsingDataSet(path));
-            Assert.That(context.Strategy.TableNameCollection.Count, Is.EqualTo(2));
+            using var converter = new XmlToCsvUsingDataSet(path);
+            Assert.That(converter.TableNameCollection.Count, Is.EqualTo(2));
 
-            foreach (var xmlTableName in context.Strategy.TableNameCollection)
+            foreach (var xmlTableName in converter.TableNameCollection)
             {
-                context.Execute(xmlTableName, @"TestData/dataDataSet_" + xmlTableName + ".csv", Encoding.Default);
+                converter.ExportToCsv(xmlTableName, @"TestData/dataDataSet_" + xmlTableName + ".csv", Encoding.Default);
             }
         }
 
@@ -41,12 +41,12 @@ namespace Timeless.DataConversion.Tests
         public void DoubleQuoteEscapeTest()
         {
             const string path = @"TestData/DoubleQuoteEscape.xml";
-            var context = new XmlToCsvContext(new XmlToCsvUsingDataSet(path));
-            Assert.That(context.Strategy.TableNameCollection.Count, Is.EqualTo(1));
+            using var converter = new XmlToCsvUsingDataSet(path);
+            Assert.That(converter.TableNameCollection.Count, Is.EqualTo(1));
 
-            foreach (var xmlTableName in context.Strategy.TableNameCollection)
+            foreach (var xmlTableName in converter.TableNameCollection)
             {
-                context.Execute(xmlTableName, string.Format(@"TestData/dataDataSet_{0}.csv", xmlTableName), Encoding.Default);
+                converter.ExportToCsv(xmlTableName, string.Format(@"TestData/dataDataSet_{0}.csv", xmlTableName), Encoding.Default);
             }
         }
 
@@ -56,19 +56,6 @@ namespace Timeless.DataConversion.Tests
             const string path = @"TestData/NestedDataError.xml";
             TestHelper.Throws<XmlSchemaException>(() => new XmlToCsvUsingDataSet(path),
                 "Type 'DCLG-HIP:Inspector' is not declared.");
-        }
-
-        [Test]
-        public void LinqImplementationTest()
-        {
-            const string path = @"TestData/data.xml";
-            var converter = new XmlToCsvUsingLinq(path);
-            var context = new XmlToCsvContext(converter);
-            Assert.That(context.Strategy.TableNameCollection.Count, Is.EqualTo(1));
-            foreach (var xmlTableName in context.Strategy.TableNameCollection)
-            {
-                context.Execute(xmlTableName, @"TestData/dataLinq_" + xmlTableName + ".csv", Encoding.Default);
-            }
         }
 
         [Test]
@@ -82,12 +69,12 @@ namespace Timeless.DataConversion.Tests
         public void DuplicateNameRenamedTest()
         {
             const string path = @"TestData/ErrorDuplicateName.xml";
-            var context = new XmlToCsvContext(new XmlToCsvUsingDataSet(path, true));
-            Assert.That(context.Strategy.TableNameCollection.Count, Is.EqualTo(2));
+            using var converter = new XmlToCsvUsingDataSet(path, true);
+            Assert.That(converter.TableNameCollection.Count, Is.EqualTo(2));
 
-            foreach (var xmlTableName in context.Strategy.TableNameCollection)
+            foreach (var xmlTableName in converter.TableNameCollection)
             {
-                context.Execute(xmlTableName, @"ErrorDuplicateName_" + xmlTableName + ".csv", Encoding.Default);
+                converter.ExportToCsv(xmlTableName, @"ErrorDuplicateName_" + xmlTableName + ".csv", Encoding.Default);
             }
         }
 
@@ -140,8 +127,7 @@ namespace Timeless.DataConversion.Tests
             using (var converter = new XmlToCsvUsingDataSet(xmlPath))
             {
                 converter.XmlDataSet.Tables["row"].Columns["Name"].ColumnName = "Display,Name";
-                var context = new XmlToCsvContext(converter);
-                context.Execute("row", csvPath, Encoding.UTF8);
+                converter.ExportToCsv("row", csvPath, Encoding.UTF8);
             }
 
             string header = File.ReadLines(csvPath).First();
@@ -174,23 +160,6 @@ namespace Timeless.DataConversion.Tests
             Assert.That(csv, Is.EqualTo(
                 "Amount" + Environment.NewLine +
                 "\"42\"" + Environment.NewLine));
-        }
-
-        [Test]
-        public void LinqExportEscapesQuotesAndCommas()
-        {
-            string xmlPath = WriteTempXml(
-                "<?xml version=\"1.0\"?><root><row><Name>Hotel \"massandra\", Yalta</Name></row></root>");
-            string csvPath = Path.Combine(TestContext.CurrentContext.WorkDirectory, Path.GetRandomFileName() + ".csv");
-
-            var converter = new XmlToCsvUsingLinq(xmlPath);
-            var context = new XmlToCsvContext(converter);
-            context.Execute("row", csvPath, Encoding.UTF8);
-
-            string csv = File.ReadAllText(csvPath, Encoding.UTF8);
-            Assert.That(csv, Is.EqualTo(
-                "Name" + Environment.NewLine +
-                "\"Hotel \"\"massandra\"\", Yalta\"" + Environment.NewLine));
         }
 
         [Test]
@@ -251,8 +220,7 @@ namespace Timeless.DataConversion.Tests
             string csvPath = Path.Combine(TestContext.CurrentContext.WorkDirectory, Path.GetRandomFileName() + ".csv");
             using (var converter = new XmlToCsvUsingDataSet(xmlPath))
             {
-                var context = new XmlToCsvContext(converter);
-                context.Execute(xmlTableName, csvPath, encoding);
+                converter.ExportToCsv(xmlTableName, csvPath, encoding);
             }
 
             return csvPath;

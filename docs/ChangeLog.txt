@@ -9,7 +9,7 @@
 -In GUI, removed the gridview to display column names, replaced with more appropriate ListBox.
 -In GUI, added new feature to preview contents of a XML node on a RTF textbox.
 -Bug fix: DuplicateName: A column named 'bla' already belongs to this DataTable: cannot set a nested table name to the same name.
--Bug fix: encoding was not working correctly in XmlToCsvUsingLinq class when converted XML.
+-Bug fix: encoding was not working correctly when converting XML.
 
 ===============================================
 

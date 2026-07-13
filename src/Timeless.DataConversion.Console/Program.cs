@@ -1,6 +1,6 @@
 ﻿using System.IO;
 using System.Text;
-using Timeless.DataConversion.XmlToCsvStrategy;
+using Timeless.DataConversion.XmlToCsv;
 
 namespace Timeless.DataConversion.Console
 {
@@ -23,13 +23,11 @@ namespace Timeless.DataConversion.Console
 
             using var converter = new XmlToCsvUsingDataSet(xmlInputFilePath.Value);
             
-            var context = new XmlToCsvContext(converter);
-
-            foreach (string xmlTableName in context.Strategy.TableNameCollection)
+            foreach (string xmlTableName in converter.TableNameCollection)
             {
                 var csvDestinationFilePath = BuildCsvDestinationFilePath(outputDirectory.Value, xmlTableName);
                 
-                context.Execute(xmlTableName, csvDestinationFilePath, Encoding.Unicode);
+                converter.ExportToCsv(xmlTableName, csvDestinationFilePath, Encoding.Unicode);
             }
         }
 

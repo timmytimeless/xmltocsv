@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace Timeless.DataConversion.XmlToCsvStrategy
+namespace Timeless.DataConversion.XmlToCsv
 {
-    public class XmlToCsvUsingDataSet : XmlToCsvStrategyBase, IDisposable
+    public class XmlToCsvUsingDataSet : IDisposable
     {
         private string _csvDestinationFilePath;
         private DataTable _workingTable;
@@ -20,6 +21,8 @@ namespace Timeless.DataConversion.XmlToCsvStrategy
 
         public XmlToCsvUsingDataSet(string xmlSourceFilePath, bool autoRenameWhenNamingConflict)
         {
+            HeaderColumnNameCollection = new Dictionary<int, string>(64);
+            TableNameCollection = new Collection<string>();
             XmlDataSet = new DataSet();
             try
             {
@@ -51,6 +54,9 @@ namespace Timeless.DataConversion.XmlToCsvStrategy
         }
 
         public DataSet XmlDataSet { get; private set; }
+        public Dictionary<int, string> HeaderColumnNameCollection { get; private set; }
+        public Collection<string> TableNameCollection { get; private set; }
+        private int ColumnCount { get; set; }
 
         /// <summary>
         /// Check for duplicates names in XML. Rename the table in case a clash with a column name is found.
@@ -71,7 +77,7 @@ namespace Timeless.DataConversion.XmlToCsvStrategy
             }
         }
 
-        public override void ExportToCsv(string xmlTableName, string csvDestinationFilePath, Encoding encoding)
+        public void ExportToCsv(string xmlTableName, string csvDestinationFilePath, Encoding encoding)
         {
             StreamWriter sw = CreateStreamWriter(xmlTableName, csvDestinationFilePath, encoding);
 
@@ -137,6 +143,25 @@ namespace Timeless.DataConversion.XmlToCsvStrategy
         private void WriteHeaderToCsv(StreamWriter sw)
         {
             sw.WriteLine(CreateCsvLine(HeaderColumnNameCollection.Values, false));
+        }
+
+        private static string CreateCsvLine(IEnumerable<string> values, bool alwaysQuote)
+        {
+            return string.Join(",", values.Select(value => EscapeCsvValue(value, alwaysQuote)));
+        }
+
+        private static string EscapeCsvValue(string value, bool alwaysQuote)
+        {
+            value = value ?? string.Empty;
+            value = value
+                .Replace("\r\n", @"\n")
+                .Replace("\r", @"\n")
+                .Replace("\n", @"\n");
+
+            bool shouldQuote = alwaysQuote || value.Contains(",") || value.Contains("\"");
+            value = value.Replace("\"", "\"\"");
+
+            return shouldQuote ? "\"" + value + "\"" : value;
         }
 
         public void Dispose()
