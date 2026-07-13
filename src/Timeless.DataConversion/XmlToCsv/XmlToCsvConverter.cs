@@ -194,11 +194,27 @@ public sealed class XmlToCsvConverter : IDisposable
         ExportInferredTables(xmlSourceFilePath, destinationDirectory, encoding, plan);
     }
 
+    public static void ExportConfirmedConversion(
+        string xmlSourceFilePath,
+        string destinationDirectory,
+        Encoding encoding,
+        XmlConversionPreview preview,
+        XmlConversionPlanConfirmation confirmation)
+    {
+        XmlInferredTablePlan confirmedPlan = ConfirmConversionPlan(preview, confirmation);
+        ExportInferredTables(xmlSourceFilePath, destinationDirectory, encoding, confirmedPlan);
+    }
+
     public static void ExportInferredTables(string xmlSourceFilePath, string destinationDirectory, Encoding encoding, XmlInferredTablePlan plan)
     {
         if (string.IsNullOrEmpty(destinationDirectory))
         {
             throw new NotSupportedException("Destination directory for inferred table export is not specified");
+        }
+
+        if (plan == null)
+        {
+            throw new ArgumentNullException(nameof(plan));
         }
 
         Directory.CreateDirectory(destinationDirectory);
@@ -207,7 +223,7 @@ public sealed class XmlToCsvConverter : IDisposable
 
         try
         {
-            using XmlReader reader = XmlReader.Create(xmlSourceFilePath);
+            using XmlReader reader = XmlReader.Create(xmlSourceFilePath, CreateStreamingReaderSettings());
             var pathStack = new Stack<string>();
 
             while (!reader.EOF)
@@ -327,7 +343,7 @@ public sealed class XmlToCsvConverter : IDisposable
 
     private bool TryExportUsingXmlReader(DataTable table, string destinationPath, Encoding encoding)
     {
-        using XmlReader reader = XmlReader.Create(_xmlSourceFilePath);
+        using XmlReader reader = XmlReader.Create(_xmlSourceFilePath, CreateStreamingReaderSettings());
         StreamWriter sw = null;
         ColumnBinding[] bindings = null;
 
@@ -491,6 +507,16 @@ public sealed class XmlToCsvConverter : IDisposable
         }
 
         return current.HasElements ? string.Empty : current.Value;
+    }
+
+    private static XmlReaderSettings CreateStreamingReaderSettings()
+    {
+        return new XmlReaderSettings
+        {
+            DtdProcessing = DtdProcessing.Prohibit,
+            IgnoreComments = true,
+            IgnoreProcessingInstructions = true
+        };
     }
 
     private static void WriteCsvField(TextWriter writer, string value, bool alwaysQuote, bool isFirstColumn)

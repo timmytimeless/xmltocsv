@@ -94,6 +94,15 @@ namespace Timeless.DataConversion.Tests
                 "\"2\",\"2\",\"B\"" + Environment.NewLine));
         }
 
+        [Test]
+        public void ExportInferredTablesRequiresConfirmedPlan()
+        {
+            string outputDirectory = CreateOutputDirectory();
+
+            Assert.Throws<ArgumentNullException>(() =>
+                XmlToCsvConverter.ExportInferredTables("missing.xml", outputDirectory, Encoding.UTF8, null));
+        }
+
         private static string WriteTempXml(string xml)
         {
             string xmlPath = Path.Combine(TestContext.CurrentContext.WorkDirectory, Path.GetRandomFileName() + ".xml");

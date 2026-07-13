@@ -82,7 +82,7 @@ namespace Timeless.DataConversion.Tests
         }
 
         [Test]
-        public void ExportInferredTablesUsesConfirmedPlanAdjustments()
+        public void ExportConfirmedConversionUsesConfirmedPlanAdjustments()
         {
             string xmlPath = WriteOrdersXml();
             XmlConversionPreview preview = XmlToCsvConverter.CreateConversionPreview(xmlPath);
@@ -94,11 +94,37 @@ namespace Timeless.DataConversion.Tests
             orderTable.Name = "orders";
             idColumn.Name = "order_id";
 
-            XmlInferredTablePlan confirmedPlan = XmlToCsvConverter.ConfirmConversionPlan(preview, confirmation);
-            XmlToCsvConverter.ExportInferredTables(xmlPath, outputDirectory, Encoding.UTF8, confirmedPlan);
+            XmlToCsvConverter.ExportConfirmedConversion(xmlPath, outputDirectory, Encoding.UTF8, preview, confirmation);
 
             string csv = File.ReadLines(Path.Combine(outputDirectory, "orders.csv"), Encoding.UTF8).First();
             Assert.That(csv, Is.EqualTo("_row_id,order_id,number"));
+        }
+
+        [Test]
+        public void ExportConfirmedConversionStreamsXmlAgainAfterPreviewAndConfirmation()
+        {
+            string xmlPath = WriteOrdersXml();
+            XmlConversionPreview preview = XmlToCsvConverter.CreateConversionPreview(xmlPath);
+            XmlConversionPlanConfirmation confirmation = XmlConversionPlanConfirmation.IncludeAll(preview);
+            string outputDirectory = CreateOutputDirectory();
+
+            File.WriteAllText(xmlPath,
+                "<?xml version=\"1.0\"?>" +
+                "<orders>" +
+                "<order id=\"200\"><number>200</number><items><item sku=\"C\"><quantity>4</quantity></item></items></order>" +
+                "<order id=\"201\"><number>201</number><items><item sku=\"D\"><quantity>5</quantity></item></items></order>" +
+                "<order id=\"202\"><number>202</number><items><item sku=\"E\"><quantity>6</quantity></item></items></order>" +
+                "</orders>",
+                Encoding.UTF8);
+
+            XmlToCsvConverter.ExportConfirmedConversion(xmlPath, outputDirectory, Encoding.UTF8, preview, confirmation);
+
+            string orderCsv = File.ReadAllText(Path.Combine(outputDirectory, "orders_order.csv"), Encoding.UTF8);
+            Assert.That(orderCsv, Is.EqualTo(
+                "_row_id,id,number" + System.Environment.NewLine +
+                "\"1\",\"200\",\"200\"" + System.Environment.NewLine +
+                "\"2\",\"201\",\"201\"" + System.Environment.NewLine +
+                "\"3\",\"202\",\"202\"" + System.Environment.NewLine));
         }
 
         private static string WriteOrdersXml()
