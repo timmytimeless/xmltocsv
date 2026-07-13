@@ -128,6 +128,88 @@ public sealed class XmlToCsvConverter : IDisposable
         }
     }
 
+    public static XmlInferredTablePlan InferTablePlan(string xmlSourceFilePath)
+    {
+        XmlStructuralProfile profile = new XmlStructuralProfiler().Profile(xmlSourceFilePath);
+        return new XmlTablePlanInferer().InferTables(profile);
+    }
+
+    public static void ExportInferredTables(string xmlSourceFilePath, string destinationDirectory, Encoding encoding)
+    {
+        XmlInferredTablePlan plan = InferTablePlan(xmlSourceFilePath);
+        ExportInferredTables(xmlSourceFilePath, destinationDirectory, encoding, plan);
+    }
+
+    public static void ExportInferredTables(string xmlSourceFilePath, string destinationDirectory, Encoding encoding, XmlInferredTablePlan plan)
+    {
+        if (string.IsNullOrEmpty(destinationDirectory))
+        {
+            throw new NotSupportedException("Destination directory for inferred table export is not specified");
+        }
+
+        Directory.CreateDirectory(destinationDirectory);
+
+        var exportState = new InferredTableExportState(plan, destinationDirectory, encoding);
+
+        try
+        {
+            using XmlReader reader = XmlReader.Create(xmlSourceFilePath);
+            var pathStack = new Stack<string>();
+
+            while (!reader.EOF)
+            {
+                if (reader.NodeType == XmlNodeType.None)
+                {
+                    if (!reader.Read())
+                    {
+                        break;
+                    }
+
+                    continue;
+                }
+
+                if (reader.NodeType != XmlNodeType.Element)
+                {
+                    if (reader.NodeType == XmlNodeType.EndElement && pathStack.Count > 0)
+                    {
+                        pathStack.Pop();
+                    }
+
+                    if (!reader.Read())
+                    {
+                        break;
+                    }
+
+                    continue;
+                }
+
+                string parentPath = pathStack.Count == 0 ? null : pathStack.Peek();
+                string path = BuildXmlPath(parentPath, reader.LocalName);
+
+                if (exportState.TryGetRootTable(path, out XmlInferredTable table))
+                {
+                    var row = (XElement)XNode.ReadFrom(reader);
+                    exportState.WriteRow(table, row, null);
+                    continue;
+                }
+
+                if (!reader.IsEmptyElement)
+                {
+                    pathStack.Push(path);
+                }
+
+                if (!reader.Read())
+                {
+                    break;
+                }
+            }
+        }
+        finally
+        {
+            exportState.Dispose();
+        }
+    }
+
     private void EnsureDataLoaded()
     {
         if (_isDataLoaded)
@@ -272,6 +354,58 @@ public sealed class XmlToCsvConverter : IDisposable
         sw.WriteLine();
     }
 
+    private static void WriteInferredHeaderToCsv(StreamWriter sw, XmlInferredTable table, bool includeParentRowId)
+    {
+        WriteCsvField(sw, "_row_id", false, true);
+
+        if (includeParentRowId)
+        {
+            WriteCsvField(sw, "_parent_row_id", false, false);
+        }
+
+        foreach (XmlInferredColumn column in table.Columns)
+        {
+            WriteCsvField(sw, column.Name, false, false);
+        }
+
+        sw.WriteLine();
+    }
+
+    private static string BuildXmlPath(string parentPath, string localName)
+    {
+        return string.IsNullOrEmpty(parentPath) ? "/" + localName : parentPath + "/" + localName;
+    }
+
+    private static string GetRelativeColumnValue(XElement row, string rowPath, string columnPath)
+    {
+        if (!columnPath.StartsWith(rowPath + "/", StringComparison.Ordinal))
+        {
+            return string.Empty;
+        }
+
+        string relativePath = columnPath.Substring(rowPath.Length + 1);
+
+        if (relativePath.StartsWith("@", StringComparison.Ordinal))
+        {
+            string attributeName = relativePath.Substring(1);
+            return row.Attributes().FirstOrDefault(item => item.Name.LocalName == attributeName)?.Value ?? string.Empty;
+        }
+
+        XElement current = row;
+
+        foreach (string segment in relativePath.Split('/'))
+        {
+            current = current.Elements().FirstOrDefault(item => item.Name.LocalName == segment);
+
+            if (current == null)
+            {
+                return string.Empty;
+            }
+        }
+
+        return current.HasElements ? string.Empty : current.Value;
+    }
+
     private static void WriteCsvField(TextWriter writer, string value, bool alwaysQuote, bool isFirstColumn)
     {
         if (!isFirstColumn)
@@ -349,6 +483,112 @@ public sealed class XmlToCsvConverter : IDisposable
             }
 
             return row.Elements().FirstOrDefault(item => item.Name.LocalName == _name)?.Value ?? string.Empty;
+        }
+    }
+
+    private sealed class InferredTableExportState : IDisposable
+    {
+        private readonly Dictionary<string, StreamWriter> _writers;
+        private readonly Dictionary<string, long> _rowIdsByTablePath;
+        private readonly Dictionary<string, XmlInferredTable> _rootTablesByPath;
+        private readonly Dictionary<string, bool> _includeParentRowIdByTablePath;
+
+        public InferredTableExportState(XmlInferredTablePlan plan, string destinationDirectory, Encoding encoding)
+        {
+            _writers = new Dictionary<string, StreamWriter>();
+            _rowIdsByTablePath = new Dictionary<string, long>();
+            _rootTablesByPath = new Dictionary<string, XmlInferredTable>();
+            _includeParentRowIdByTablePath = new Dictionary<string, bool>();
+
+            var childTablePaths = new HashSet<string>(plan.Tables.SelectMany(table => table.ChildTables.Select(child => child.Path)));
+
+            foreach (XmlInferredTable table in plan.Tables)
+            {
+                bool includeParentRowId = childTablePaths.Contains(table.Path);
+                _includeParentRowIdByTablePath[table.Path] = includeParentRowId;
+
+                string destinationPath = Path.Combine(destinationDirectory, table.Name + ".csv");
+                StreamWriter writer = CreateStreamWriter(destinationPath, encoding);
+                WriteInferredHeaderToCsv(writer, table, includeParentRowId);
+                _writers.Add(table.Path, writer);
+                _rowIdsByTablePath.Add(table.Path, 0);
+
+                if (!childTablePaths.Contains(table.Path))
+                {
+                    _rootTablesByPath.Add(table.Path, table);
+                }
+            }
+        }
+
+        public bool TryGetRootTable(string path, out XmlInferredTable table)
+        {
+            return _rootTablesByPath.TryGetValue(path, out table);
+        }
+
+        public string WriteRow(XmlInferredTable table, XElement row, string parentRowId)
+        {
+            long nextId = _rowIdsByTablePath[table.Path] + 1;
+            _rowIdsByTablePath[table.Path] = nextId;
+            string rowId = nextId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            StreamWriter writer = _writers[table.Path];
+
+            WriteCsvField(writer, rowId, true, true);
+
+            if (_includeParentRowIdByTablePath[table.Path])
+            {
+                WriteCsvField(writer, parentRowId, true, false);
+            }
+
+            foreach (XmlInferredColumn column in table.Columns)
+            {
+                WriteCsvField(writer, GetRelativeColumnValue(row, table.Path, column.Path), true, false);
+            }
+
+            writer.WriteLine();
+
+            foreach (XmlInferredTable childTable in table.ChildTables)
+            {
+                WriteChildRows(childTable, table.Path, row, rowId);
+            }
+
+            return rowId;
+        }
+
+        private void WriteChildRows(XmlInferredTable childTable, string parentTablePath, XElement parentRow, string parentRowId)
+        {
+            foreach (XElement childRow in FindDescendantRows(parentRow, parentTablePath, childTable.Path))
+            {
+                WriteRow(childTable, childRow, parentRowId);
+            }
+        }
+
+        private static IEnumerable<XElement> FindDescendantRows(XElement parentRow, string parentTablePath, string childTablePath)
+        {
+            if (!childTablePath.StartsWith(parentTablePath + "/", StringComparison.Ordinal))
+            {
+                yield break;
+            }
+
+            string relativePath = childTablePath.Substring(parentTablePath.Length + 1);
+            IEnumerable<XElement> current = new[] { parentRow };
+
+            foreach (string segment in relativePath.Split('/'))
+            {
+                current = current.SelectMany(item => item.Elements().Where(element => element.Name.LocalName == segment));
+            }
+
+            foreach (XElement childRow in current)
+            {
+                yield return childRow;
+            }
+        }
+
+        public void Dispose()
+        {
+            foreach (StreamWriter writer in _writers.Values)
+            {
+                writer.Dispose();
+            }
         }
     }
 
