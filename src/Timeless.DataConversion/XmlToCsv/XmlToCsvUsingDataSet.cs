@@ -10,9 +10,6 @@ namespace Timeless.DataConversion.XmlToCsv
 {
     public class XmlToCsvUsingDataSet : IDisposable
     {
-        private string _csvDestinationFilePath;
-        private DataTable _workingTable;
-
         public XmlToCsvUsingDataSet(string xmlSourceFilePath)
             : this(xmlSourceFilePath, false)
         {
@@ -21,7 +18,6 @@ namespace Timeless.DataConversion.XmlToCsv
 
         public XmlToCsvUsingDataSet(string xmlSourceFilePath, bool autoRenameWhenNamingConflict)
         {
-            HeaderColumnNameCollection = new Dictionary<int, string>(64);
             TableNameCollection = new Collection<string>();
             XmlDataSet = new DataSet();
             try
@@ -54,9 +50,7 @@ namespace Timeless.DataConversion.XmlToCsv
         }
 
         public DataSet XmlDataSet { get; private set; }
-        public Dictionary<int, string> HeaderColumnNameCollection { get; private set; }
         public Collection<string> TableNameCollection { get; private set; }
-        private int ColumnCount { get; set; }
 
         /// <summary>
         /// Check for duplicates names in XML. Rename the table in case a clash with a column name is found.
@@ -79,15 +73,16 @@ namespace Timeless.DataConversion.XmlToCsv
 
         public void ExportToCsv(string xmlTableName, string csvDestinationFilePath, Encoding encoding)
         {
-            StreamWriter sw = CreateStreamWriter(xmlTableName, csvDestinationFilePath, encoding);
+            DataTable table = GetTableToExport(xmlTableName);
+            StreamWriter sw = CreateStreamWriter(csvDestinationFilePath, encoding);
 
             using (sw)
             {
-                WriteHeaderToCsv(sw);
+                WriteHeaderToCsv(sw, table.Columns);
 
-                foreach (DataRow row in XmlDataSet.Tables[xmlTableName].Rows)
+                foreach (DataRow row in table.Rows)
                 {
-                    WriteRowToCsv(xmlTableName, sw, row);
+                    WriteRowToCsv(sw, row, table.Columns);
                 }
 
                 sw.Flush();
@@ -95,25 +90,19 @@ namespace Timeless.DataConversion.XmlToCsv
             }
         }
 
-        private StreamWriter CreateStreamWriter(string xmlTableName, string csvDestinationFilePath, Encoding encoding)
+        private DataTable GetTableToExport(string xmlTableName)
         {
             if (string.IsNullOrEmpty(xmlTableName))
             {
                 throw new NotSupportedException("Table name for table to export is not specified");
             }
 
-            HeaderColumnNameCollection.Clear();
+            return XmlDataSet.Tables[xmlTableName];
+        }
 
-            _csvDestinationFilePath = csvDestinationFilePath;
-            _workingTable = XmlDataSet.Tables[xmlTableName];
-            ColumnCount = _workingTable.Columns.Count;
-
-            foreach (DataColumn column in _workingTable.Columns)
-            {
-                HeaderColumnNameCollection.Add(column.Ordinal, column.ColumnName);
-            }
-
-            var fs = new FileStream(_csvDestinationFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
+        private StreamWriter CreateStreamWriter(string csvDestinationFilePath, Encoding encoding)
+        {
+            var fs = new FileStream(csvDestinationFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
             var sw = new StreamWriter(fs, encoding);
             return sw;
         }
@@ -128,40 +117,88 @@ namespace Timeless.DataConversion.XmlToCsv
             return list;
         }
 
-        private void WriteRowToCsv(string xmlTableName, StreamWriter sw, DataRow row)
+        private void WriteRowToCsv(StreamWriter sw, DataRow row, DataColumnCollection columns)
         {
-            var columnValues = new List<string>(ColumnCount);
+            bool isFirstColumn = true;
 
-            foreach (DataColumn column in XmlDataSet.Tables[xmlTableName].Columns)
+            foreach (DataColumn column in columns)
             {
-                columnValues.Add(row[column].ToString());
+                WriteCsvField(sw, row[column].ToString(), true, isFirstColumn);
+                isFirstColumn = false;
             }
 
-            sw.WriteLine(CreateCsvLine(columnValues, true));
+            sw.WriteLine();
         }
 
-        private void WriteHeaderToCsv(StreamWriter sw)
+        private void WriteHeaderToCsv(StreamWriter sw, DataColumnCollection columns)
         {
-            sw.WriteLine(CreateCsvLine(HeaderColumnNameCollection.Values, false));
+            bool isFirstColumn = true;
+
+            foreach (DataColumn column in columns)
+            {
+                WriteCsvField(sw, column.ColumnName, false, isFirstColumn);
+                isFirstColumn = false;
+            }
+
+            sw.WriteLine();
         }
 
-        private static string CreateCsvLine(IEnumerable<string> values, bool alwaysQuote)
+        private static void WriteCsvField(TextWriter writer, string value, bool alwaysQuote, bool isFirstColumn)
         {
-            return string.Join(",", values.Select(value => EscapeCsvValue(value, alwaysQuote)));
-        }
+            if (!isFirstColumn)
+            {
+                writer.Write(',');
+            }
 
-        private static string EscapeCsvValue(string value, bool alwaysQuote)
-        {
             value = value ?? string.Empty;
-            value = value
-                .Replace("\r\n", @"\n")
-                .Replace("\r", @"\n")
-                .Replace("\n", @"\n");
+            bool shouldQuote = alwaysQuote || ContainsCsvSpecialCharacter(value);
 
-            bool shouldQuote = alwaysQuote || value.Contains(",") || value.Contains("\"");
-            value = value.Replace("\"", "\"\"");
+            if (shouldQuote)
+            {
+                writer.Write('"');
+            }
 
-            return shouldQuote ? "\"" + value + "\"" : value;
+            WriteEscapedCsvValue(writer, value);
+
+            if (shouldQuote)
+            {
+                writer.Write('"');
+            }
+        }
+
+        private static bool ContainsCsvSpecialCharacter(string value)
+        {
+            return value.IndexOf(',') >= 0 || value.IndexOf('"') >= 0;
+        }
+
+        private static void WriteEscapedCsvValue(TextWriter writer, string value)
+        {
+            for (int i = 0; i < value.Length; i++)
+            {
+                char current = value[i];
+
+                if (current == '\r')
+                {
+                    writer.Write(@"\n");
+
+                    if (i + 1 < value.Length && value[i + 1] == '\n')
+                    {
+                        i++;
+                    }
+                }
+                else if (current == '\n')
+                {
+                    writer.Write(@"\n");
+                }
+                else if (current == '"')
+                {
+                    writer.Write("\"\"");
+                }
+                else
+                {
+                    writer.Write(current);
+                }
+            }
         }
 
         public void Dispose()
