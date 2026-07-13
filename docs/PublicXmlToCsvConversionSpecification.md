@@ -89,7 +89,22 @@ A public service must enforce operational limits:
 
 These limits must be surfaced as user-facing validation or conversion errors.
 
-### 7. Reject or Require Mapping for Pathological XML
+### 7. Converter-Level Limit Enforcement
+
+Reusable validators are useful for clients and GUIs, but public conversion workflows must also provide converter-level APIs that enforce configured limits.
+
+The converter should expose validation-aware workflow methods that accept limit settings and stop conversion when those limits are exceeded. These methods should apply limits at the appropriate stages:
+
+- before profiling: file size
+- during or immediately after profiling: XML depth and unique paths
+- after table-plan inference or confirmation: max columns per table and max generated CSV files
+- during export or immediately after export: timeout/cancellation and output size limits
+
+For example, a configured max XML depth must be enforceable by calling a converter workflow method, not only by requiring client code to remember to call a separate validator.
+
+Validation failures should be returned or thrown as structured conversion errors that clients can display directly.
+
+### 8. Reject or Require Mapping for Pathological XML
 
 Some XML cannot be converted meaningfully without user decisions. The service should return an actionable message instead of silently producing bad CSV.
 

@@ -140,6 +140,26 @@ public sealed class XmlToCsvConverter : IDisposable
         return new XmlConversionPreviewBuilder().Build(plan);
     }
 
+    public static XmlConversionValidationResult ValidateSourceFile(string xmlSourceFilePath, XmlConversionLimits limits)
+    {
+        return new XmlConversionValidator().ValidateSourceFile(xmlSourceFilePath, limits);
+    }
+
+    public static XmlConversionValidationResult ValidateStructuralProfile(XmlStructuralProfile profile, XmlConversionLimits limits)
+    {
+        return new XmlConversionValidator().ValidateStructuralProfile(profile, limits);
+    }
+
+    public static XmlConversionValidationResult ValidateTablePlan(XmlInferredTablePlan plan, XmlConversionLimits limits)
+    {
+        return new XmlConversionValidator().ValidateTablePlan(plan, limits);
+    }
+
+    public static XmlConversionValidationResult ValidateOutputDirectory(string outputDirectory, XmlConversionLimits limits)
+    {
+        return new XmlConversionValidator().ValidateOutputDirectory(outputDirectory, limits);
+    }
+
     public static XmlInferredTablePlan ConfirmConversionPlan(XmlConversionPreview preview, XmlConversionPlanConfirmation confirmation)
     {
         if (preview == null)
