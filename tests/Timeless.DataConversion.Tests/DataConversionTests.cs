@@ -89,6 +89,27 @@ namespace Timeless.DataConversion.Tests
         }
 
         [Test]
+        public void ConsoleOutputEncodingDefaultsToUnicode()
+        {
+            var outputEncoding = new Timeless.DataConversion.Console.CmdLineString("encoding", false, "CSV output encoding.");
+
+            Encoding encoding = ConsoleProgram.ResolveOutputEncoding(outputEncoding);
+
+            Assert.That(encoding.WebName, Is.EqualTo(Encoding.Unicode.WebName));
+        }
+
+        [Test]
+        public void ConsoleOutputEncodingCanBeConfigured()
+        {
+            var outputEncoding = new Timeless.DataConversion.Console.CmdLineString("encoding", false, "CSV output encoding.");
+            outputEncoding.SetValue("utf-8");
+
+            Encoding encoding = ConsoleProgram.ResolveOutputEncoding(outputEncoding);
+
+            Assert.That(encoding.WebName, Is.EqualTo(Encoding.UTF8.WebName));
+        }
+
+        [Test]
         public void DataSetExportWritesExpectedCsvContents()
         {
             string csvPath = ConvertSingleTableToCsv(@"TestData/data.xml", "csvRow", Encoding.UTF8);

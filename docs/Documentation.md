@@ -23,7 +23,7 @@ Code usage example:
 
 <div style="color:black; background-color:white">
 
-<pre>XmlToCsv.Console.exe <span style="color:gray">-</span>xml c:\payslip.xml <span style="color:gray">-</span>dir c:\convertedcsvfiles
+<pre>XmlToCsv.Console.exe <span style="color:gray">-</span>xml c:\payslip.xml <span style="color:gray">-</span>dir c:\convertedcsvfiles <span style="color:gray">-</span>encoding utf-8
 </pre>
 
 </div>

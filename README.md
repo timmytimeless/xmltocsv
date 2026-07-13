@@ -51,7 +51,7 @@ dotnet pack src/Timeless.DataConversion/Timeless.DataConversion.csproj --configu
 After building `Timeless.DataConversion.Console`, run:
 
 ```bat
-Timeless.DataConversion.Console.exe -xml C:\path\input.xml -dir C:\path\output
+Timeless.DataConversion.Console.exe -xml C:\path\input.xml -dir C:\path\output -encoding utf-8
 ```
 
 Arguments:
@@ -60,6 +60,7 @@ Arguments:
 | --- | --- |
 | `-xml` | Path to the source XML file. |
 | `-dir` | Directory where generated CSV files should be written. |
+| `-encoding` | Optional CSV output encoding. Defaults to `unicode`. Example: `utf-8`. |
 | `-help` | Prints command line help. |
 
 The console application writes one CSV file per discovered XML table using the table name as the file name.
@@ -112,7 +113,7 @@ dotnet test tests/Timeless.DataConversion.Tests/Timeless.DataConversion.Tests.cs
 - The projects target .NET 10 and use SDK-style project files.
 - The `DataSet` implementation depends on how `DataSet.ReadXml` infers tables and columns from the XML shape.
 - Deeply nested or ambiguous XML structures can raise framework exceptions during XML loading.
-- The console application currently writes CSV using `Encoding.Unicode`.
+- The console application writes CSV using `Encoding.Unicode` by default. Use `-encoding utf-8` or another supported .NET encoding name to override it.
 - Generated `bin` and `obj` folders are build outputs and are not needed to understand or modify the source.
 
 ## Historical Context
