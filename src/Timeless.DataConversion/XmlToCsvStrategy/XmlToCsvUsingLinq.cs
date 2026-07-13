@@ -19,14 +19,13 @@ namespace Timeless.DataConversion.XmlToCsvStrategy
         {
             _xmlSourceFilePath = @xmlSourceFilePath;
 
-            using (var ds = new DataSet("ds"))
-            {
-                ds.ReadXmlSchema(@_xmlSourceFilePath);
+            using var ds = new DataSet("ds");
+            
+            ds.ReadXmlSchema(@_xmlSourceFilePath);
 
-                foreach (DataTable table in ds.Tables)
-                {
-                    TableNameCollection.Add(table.TableName);
-                }
+            foreach (DataTable table in ds.Tables)
+            {
+                TableNameCollection.Add(table.TableName);
             }
         }
 
@@ -35,54 +34,31 @@ namespace Timeless.DataConversion.XmlToCsvStrategy
             _csvDestinationFilePath = csvDestinationFilePath;
 
             HeaderColumnNameCollection.Clear();
+            ColumnCount = 0;
 
-            _csvDestinationFilePath = csvDestinationFilePath;
+            using var reader = XmlReader.Create(_xmlSourceFilePath);
+            
+            var workingTable =
+                from el in reader.StreamElements(xmlTableName).DescendantsAndSelf()
+                where el.Descendants().Any()
+                select el;
 
-            using (XmlReader reader = XmlReader.Create(_xmlSourceFilePath))
+            IEnumerable<XElement> list = workingTable.ToList();
+
+            using var fs = new FileStream(_csvDestinationFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
+            using var sw = new StreamWriter(fs, encoding);
+
+            foreach (var x in list.Take(1).Descendants())
             {
-                IEnumerable<XElement> workingTable =
-                    from el in reader.StreamElements(xmlTableName).DescendantsAndSelf()
-                    where el.Descendants().Count() > 0
-                    select el;
+                HeaderColumnNameCollection.Add(ColumnCount, x.Name.ToString());
+                ColumnCount++;
+            }
 
-                IEnumerable<XElement> list = workingTable.ToList();
+            sw.WriteLine(CreateCsvLine(HeaderColumnNameCollection.Values, false));
 
-                var fs = new FileStream(_csvDestinationFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
-                var sw = new StreamWriter(fs, encoding);
-
-                string headerLine = string.Empty;
-
-                foreach (XElement x in list.Take(1).Descendants())
-                {
-                    HeaderColumnNameCollection.Add(ColumnCount, x.Name.ToString());
-                    headerLine += x.Name + ",";
-                    ColumnCount++;
-                }
-
-                using (sw)
-                {
-                    char[] charsToTrim = { ',' };
-                    sw.WriteLine(headerLine.TrimEnd(charsToTrim));
-
-                    foreach (XElement element in list)
-                    {
-                        string rowString = string.Empty;
-                        string columnString = string.Empty;
-
-                        foreach (var obj in element.Descendants())
-                        {
-                            columnString += obj.Value + ",";
-                        }
-
-                        rowString += columnString;
-                        rowString = rowString.Replace(Environment.NewLine, @"-");
-                        sw.WriteLine(rowString.TrimEnd(charsToTrim));
-                    }
-
-                    sw.Close();
-                }
-
-                reader.Close();
+            foreach (var element in list)
+            {
+                sw.WriteLine(CreateCsvLine(element.Descendants().Select(obj => obj.Value), true));
             }
         }
     }

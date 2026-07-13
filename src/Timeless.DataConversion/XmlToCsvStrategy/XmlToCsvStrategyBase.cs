@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Text;
 
 namespace Timeless.DataConversion.XmlToCsvStrategy
@@ -16,6 +17,25 @@ namespace Timeless.DataConversion.XmlToCsvStrategy
         protected int ColumnCount { get; set; }
         public Collection<string> TableNameCollection { get; private set; }
         public abstract void ExportToCsv(string xmlTableName, string csvDestinationFilePath, Encoding encoding);
+
+        protected static string CreateCsvLine(IEnumerable<string> values, bool alwaysQuote)
+        {
+            return string.Join(",", values.Select(value => EscapeCsvValue(value, alwaysQuote)));
+        }
+
+        protected static string EscapeCsvValue(string value, bool alwaysQuote)
+        {
+            value = value ?? string.Empty;
+            value = value
+                .Replace("\r\n", @"\n")
+                .Replace("\r", @"\n")
+                .Replace("\n", @"\n");
+
+            bool shouldQuote = alwaysQuote || value.Contains(",") || value.Contains("\"");
+            value = value.Replace("\"", "\"\"");
+
+            return shouldQuote ? "\"" + value + "\"" : value;
+        }
 
         //protected static string CreateCsvRowHeader(Dictionary<int, string> headerColumnNames)
         //{

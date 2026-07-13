@@ -124,53 +124,19 @@ namespace Timeless.DataConversion.XmlToCsvStrategy
 
         private void WriteRowToCsv(string xmlTableName, StreamWriter sw, DataRow row)
         {
-            int colNr = 0;
-
-            string rowValue = string.Empty;
+            var columnValues = new List<string>(ColumnCount);
 
             foreach (DataColumn column in XmlDataSet.Tables[xmlTableName].Columns)
             {
-                bool isString = (column.DataType == typeof(string));
-                string columnValue;
-
-                if (isString)
-                {
-                    string stringValue = row[column].ToString();
-                    stringValue = stringValue.Replace(Environment.NewLine, @"\n");
-                    const string doubleQuote = "\"";
-
-                    stringValue = stringValue.Replace(doubleQuote, doubleQuote + doubleQuote);
-                    columnValue = "\"" + stringValue + "\"";
-                }
-                else
-                {
-                    columnValue = row[column].ToString();
-                }
-
-                rowValue += columnValue;
-
-                if (colNr < ColumnCount - 1)
-                {
-                    rowValue += ",";
-                }
-
-                colNr++;
+                columnValues.Add(row[column].ToString());
             }
 
-            sw.WriteLine(rowValue);
+            sw.WriteLine(CreateCsvLine(columnValues, true));
         }
 
         private void WriteHeaderToCsv(StreamWriter sw)
         {
-            string headerLine = string.Empty;
-
-            foreach (KeyValuePair<int, string> pair in HeaderColumnNameCollection)
-            {
-                headerLine += pair.Value + ",";
-            }
-
-            char[] charsToTrim = { ',' };
-            sw.WriteLine(headerLine.TrimEnd(charsToTrim));
+            sw.WriteLine(CreateCsvLine(HeaderColumnNameCollection.Values, false));
         }
 
         public void Dispose()

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Xml.Schema;
 using Timeless.DataConversion.XmlToCsvStrategy;
@@ -98,6 +99,170 @@ namespace Timeless.DataConversion.Tests
             string destinationFilePath = ConsoleProgram.BuildCsvDestinationFilePath(outputDirectory, "Employees");
 
             Assert.That(destinationFilePath, Is.EqualTo(outputDirectory + Path.DirectorySeparatorChar + "Employees.csv"));
+        }
+
+        [Test]
+        public void DataSetExportWritesExpectedCsvContents()
+        {
+            string csvPath = ConvertSingleTableToCsv(@"TestData/data.xml", "csvRow", Encoding.UTF8);
+
+            string csv = File.ReadAllText(csvPath, Encoding.UTF8);
+
+            Assert.That(csv, Is.EqualTo(
+                "ZIPCode,CityName,StateAbbr,Country" + Environment.NewLine +
+                "\"10001\",\"James Town\",\"NY\",\"USA\"" + Environment.NewLine +
+                "\"10002\",\"Abbrevich\",\"CA\",\"USA\"" + Environment.NewLine +
+                "\"10003\",\"Sommerville\",\"WY\",\"USA\"" + Environment.NewLine +
+                "\"10004\",\"Loveland\",\"TX\",\"USA\"" + Environment.NewLine));
+        }
+
+        [Test]
+        public void DataSetExportEscapesQuotesAndCommas()
+        {
+            string xmlPath = WriteTempXml(
+                "<?xml version=\"1.0\"?><root><row><Name>Hotel \"massandra\", Yalta</Name></row></root>");
+
+            string csvPath = ConvertSingleTableToCsv(xmlPath, "row", Encoding.UTF8);
+
+            string csv = File.ReadAllText(csvPath, Encoding.UTF8);
+            Assert.That(csv, Is.EqualTo(
+                "Name" + Environment.NewLine +
+                "\"Hotel \"\"massandra\"\", Yalta\"" + Environment.NewLine));
+        }
+
+        [Test]
+        public void DataSetExportEscapesHeaders()
+        {
+            string xmlPath = WriteTempXml(
+                "<?xml version=\"1.0\"?><root><row><Name>Yalta</Name></row></root>");
+            string csvPath = Path.Combine(TestContext.CurrentContext.WorkDirectory, Path.GetRandomFileName() + ".csv");
+
+            using (var converter = new XmlToCsvUsingDataSet(xmlPath))
+            {
+                converter.XmlDataSet.Tables["row"].Columns["Name"].ColumnName = "Display,Name";
+                var context = new XmlToCsvContext(converter);
+                context.Execute("row", csvPath, Encoding.UTF8);
+            }
+
+            string header = File.ReadLines(csvPath).First();
+            Assert.That(header, Is.EqualTo("\"Display,Name\""));
+        }
+
+        [Test]
+        public void DataSetExportQuotesNonStringValues()
+        {
+            string xmlPath = WriteTempXml(
+                "<?xml version=\"1.0\"?>" +
+                "<root>" +
+                "<xs:schema xmlns=\"\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">" +
+                "<xs:element name=\"root\">" +
+                "<xs:complexType><xs:sequence>" +
+                "<xs:element name=\"row\" maxOccurs=\"unbounded\">" +
+                "<xs:complexType><xs:sequence>" +
+                "<xs:element name=\"Amount\" type=\"xs:int\" />" +
+                "</xs:sequence></xs:complexType>" +
+                "</xs:element>" +
+                "</xs:sequence></xs:complexType>" +
+                "</xs:element>" +
+                "</xs:schema>" +
+                "<row><Amount>42</Amount></row>" +
+                "</root>");
+
+            string csvPath = ConvertSingleTableToCsv(xmlPath, "row", Encoding.UTF8);
+
+            string csv = File.ReadAllText(csvPath, Encoding.UTF8);
+            Assert.That(csv, Is.EqualTo(
+                "Amount" + Environment.NewLine +
+                "\"42\"" + Environment.NewLine));
+        }
+
+        [Test]
+        public void LinqExportEscapesQuotesAndCommas()
+        {
+            string xmlPath = WriteTempXml(
+                "<?xml version=\"1.0\"?><root><row><Name>Hotel \"massandra\", Yalta</Name></row></root>");
+            string csvPath = Path.Combine(TestContext.CurrentContext.WorkDirectory, Path.GetRandomFileName() + ".csv");
+
+            var converter = new XmlToCsvUsingLinq(xmlPath);
+            var context = new XmlToCsvContext(converter);
+            context.Execute("row", csvPath, Encoding.UTF8);
+
+            string csv = File.ReadAllText(csvPath, Encoding.UTF8);
+            Assert.That(csv, Is.EqualTo(
+                "Name" + Environment.NewLine +
+                "\"Hotel \"\"massandra\"\", Yalta\"" + Environment.NewLine));
+        }
+
+        [Test]
+        public void DataSetExportWritesExpectedHeaders()
+        {
+            string csvPath = ConvertSingleTableToCsv(@"TestData/data.xml", "csvRow", Encoding.UTF8);
+
+            string header = File.ReadLines(csvPath).First();
+
+            Assert.That(header, Is.EqualTo("ZIPCode,CityName,StateAbbr,Country"));
+        }
+
+        [Test]
+        public void DataSetExportPreservesRowOrdering()
+        {
+            string csvPath = ConvertSingleTableToCsv(@"TestData/data.xml", "csvRow", Encoding.UTF8);
+
+            string[] lines = File.ReadAllLines(csvPath, Encoding.UTF8);
+
+            Assert.That(lines[1], Is.EqualTo("\"10001\",\"James Town\",\"NY\",\"USA\""));
+            Assert.That(lines[2], Is.EqualTo("\"10002\",\"Abbrevich\",\"CA\",\"USA\""));
+            Assert.That(lines[3], Is.EqualTo("\"10003\",\"Sommerville\",\"WY\",\"USA\""));
+            Assert.That(lines[4], Is.EqualTo("\"10004\",\"Loveland\",\"TX\",\"USA\""));
+        }
+
+        [Test]
+        public void DataSetExportUsesRequestedEncoding()
+        {
+            string xmlPath = WriteTempXml(
+                "<?xml version=\"1.0\" encoding=\"utf-8\"?><root><row><City>München</City></row></root>");
+
+            string csvPath = ConvertSingleTableToCsv(xmlPath, "row", Encoding.Unicode);
+
+            byte[] bytes = File.ReadAllBytes(csvPath);
+            string csv = Encoding.Unicode.GetString(bytes);
+
+            Assert.That(bytes[0], Is.EqualTo(0xFF));
+            Assert.That(bytes[1], Is.EqualTo(0xFE));
+            Assert.That(csv, Does.Contain("\"München\""));
+        }
+
+        [Test]
+        public void DataSetExportReplacesNewlinesInsideValues()
+        {
+            string xmlPath = WriteTempXml(
+                "<?xml version=\"1.0\"?><root><row><Notes>first" + Environment.NewLine + "second</Notes></row></root>");
+
+            string csvPath = ConvertSingleTableToCsv(xmlPath, "row", Encoding.UTF8);
+
+            string csv = File.ReadAllText(csvPath, Encoding.UTF8);
+            Assert.That(csv, Is.EqualTo(
+                "Notes" + Environment.NewLine +
+                "\"first\\nsecond\"" + Environment.NewLine));
+        }
+
+        private static string ConvertSingleTableToCsv(string xmlPath, string xmlTableName, Encoding encoding)
+        {
+            string csvPath = Path.Combine(TestContext.CurrentContext.WorkDirectory, Path.GetRandomFileName() + ".csv");
+            using (var converter = new XmlToCsvUsingDataSet(xmlPath))
+            {
+                var context = new XmlToCsvContext(converter);
+                context.Execute(xmlTableName, csvPath, encoding);
+            }
+
+            return csvPath;
+        }
+
+        private static string WriteTempXml(string xml)
+        {
+            string xmlPath = Path.Combine(TestContext.CurrentContext.WorkDirectory, Path.GetRandomFileName() + ".xml");
+            File.WriteAllText(xmlPath, xml, Encoding.UTF8);
+            return xmlPath;
         }
     }
 }
