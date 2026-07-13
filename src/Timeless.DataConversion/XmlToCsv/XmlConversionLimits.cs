@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 
 namespace Timeless.DataConversion.XmlToCsv;
 
@@ -11,4 +12,5 @@ public sealed class XmlConversionLimits
     public int? MaxGeneratedCsvFiles { get; set; }
     public long? MaxOutputBytes { get; set; }
     public TimeSpan? Timeout { get; set; }
+    public CancellationToken CancellationToken { get; set; }
 }

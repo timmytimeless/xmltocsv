@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -140,6 +141,25 @@ public sealed class XmlToCsvConverter : IDisposable
         return new XmlConversionPreviewBuilder().Build(plan);
     }
 
+    public static XmlConversionPreview CreateConversionPreview(string xmlSourceFilePath, XmlConversionLimits limits)
+    {
+        var timer = Stopwatch.StartNew();
+        var validator = new XmlConversionValidator();
+
+        ThrowIfInvalid(validator.ValidateSourceFile(xmlSourceFilePath, limits));
+        ThrowIfInvalid(validator.ValidateExecution(timer.Elapsed, limits));
+
+        XmlStructuralProfile profile = new XmlStructuralProfiler().Profile(xmlSourceFilePath);
+        ThrowIfInvalid(validator.ValidateStructuralProfile(profile, limits));
+        ThrowIfInvalid(validator.ValidateExecution(timer.Elapsed, limits));
+
+        XmlInferredTablePlan plan = new XmlTablePlanInferer().InferTables(profile);
+        ThrowIfInvalid(validator.ValidateTablePlan(plan, limits));
+        ThrowIfInvalid(validator.ValidateExecution(timer.Elapsed, limits));
+
+        return new XmlConversionPreviewBuilder().Build(plan);
+    }
+
     public static XmlConversionValidationResult ValidateSourceFile(string xmlSourceFilePath, XmlConversionLimits limits)
     {
         return new XmlConversionValidator().ValidateSourceFile(xmlSourceFilePath, limits);
@@ -158,6 +178,11 @@ public sealed class XmlToCsvConverter : IDisposable
     public static XmlConversionValidationResult ValidateOutputDirectory(string outputDirectory, XmlConversionLimits limits)
     {
         return new XmlConversionValidator().ValidateOutputDirectory(outputDirectory, limits);
+    }
+
+    public static XmlConversionValidationResult ValidateExecution(TimeSpan elapsed, XmlConversionLimits limits)
+    {
+        return new XmlConversionValidator().ValidateExecution(elapsed, limits);
     }
 
     public static XmlInferredTablePlan ConfirmConversionPlan(XmlConversionPreview preview, XmlConversionPlanConfirmation confirmation)
@@ -223,6 +248,18 @@ public sealed class XmlToCsvConverter : IDisposable
     {
         XmlInferredTablePlan confirmedPlan = ConfirmConversionPlan(preview, confirmation);
         ExportInferredTables(xmlSourceFilePath, destinationDirectory, encoding, confirmedPlan);
+    }
+
+    public static void ExportConfirmedConversion(
+        string xmlSourceFilePath,
+        string destinationDirectory,
+        Encoding encoding,
+        XmlConversionPreview preview,
+        XmlConversionPlanConfirmation confirmation,
+        XmlConversionLimits limits)
+    {
+        XmlInferredTablePlan confirmedPlan = ConfirmConversionPlan(preview, confirmation);
+        ExportInferredTables(xmlSourceFilePath, destinationDirectory, encoding, confirmedPlan, limits);
     }
 
     public static void ExportInferredTables(string xmlSourceFilePath, string destinationDirectory, Encoding encoding, XmlInferredTablePlan plan)
@@ -300,6 +337,42 @@ public sealed class XmlToCsvConverter : IDisposable
         }
     }
 
+    public static void ExportInferredTables(
+        string xmlSourceFilePath,
+        string destinationDirectory,
+        Encoding encoding,
+        XmlInferredTablePlan plan,
+        XmlConversionLimits limits)
+    {
+        if (string.IsNullOrEmpty(destinationDirectory))
+        {
+            throw new NotSupportedException("Destination directory for inferred table export is not specified");
+        }
+
+        if (plan == null)
+        {
+            throw new ArgumentNullException(nameof(plan));
+        }
+
+        var timer = Stopwatch.StartNew();
+        var validator = new XmlConversionValidator();
+
+        ThrowIfInvalid(validator.ValidateSourceFile(xmlSourceFilePath, limits));
+        ThrowIfInvalid(validator.ValidateExecution(timer.Elapsed, limits));
+
+        XmlStructuralProfile profile = new XmlStructuralProfiler().Profile(xmlSourceFilePath);
+        ThrowIfInvalid(validator.ValidateStructuralProfile(profile, limits));
+        ThrowIfInvalid(validator.ValidateExecution(timer.Elapsed, limits));
+
+        ThrowIfInvalid(validator.ValidateTablePlan(plan, limits));
+        ThrowIfInvalid(validator.ValidateExecution(timer.Elapsed, limits));
+
+        ExportInferredTables(xmlSourceFilePath, destinationDirectory, encoding, plan);
+
+        ThrowIfInvalid(validator.ValidateExecution(timer.Elapsed, limits));
+        ThrowIfInvalid(validator.ValidateOutputDirectory(destinationDirectory, limits));
+    }
+
     private void EnsureDataLoaded()
     {
         if (_isDataLoaded)
@@ -326,6 +399,14 @@ public sealed class XmlToCsvConverter : IDisposable
         var fs = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None);
         var sw = new StreamWriter(fs, encoding);
         return sw;
+    }
+
+    private static void ThrowIfInvalid(XmlConversionValidationResult result)
+    {
+        if (!result.IsValid)
+        {
+            throw new XmlConversionValidationException(result);
+        }
     }
 
     private static XmlInferredTable CreateConfirmedTable(XmlInferredTable sourceTable, XmlTablePlanConfirmation tableConfirmation)

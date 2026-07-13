@@ -28,4 +28,9 @@ public sealed class XmlConversionValidationIssue
 
         return new XmlConversionValidationIssue(code, message, actualValue, limit);
     }
+
+    internal static XmlConversionValidationIssue CreateMessage(string code, string message)
+    {
+        return new XmlConversionValidationIssue(code, message, 0, 0);
+    }
 }

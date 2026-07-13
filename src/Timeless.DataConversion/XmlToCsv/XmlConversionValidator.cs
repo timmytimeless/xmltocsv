@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 using System.IO;
 using System.Linq;
 
@@ -93,6 +94,32 @@ public sealed class XmlConversionValidator
             {
                 issues.Add(XmlConversionValidationIssue.Create("max_output_bytes", "Output size in bytes", outputBytes, maxOutputBytes));
             }
+        }
+
+        return new XmlConversionValidationResult(issues);
+    }
+
+    public XmlConversionValidationResult ValidateExecution(TimeSpan elapsed, XmlConversionLimits limits)
+    {
+        var issues = new List<XmlConversionValidationIssue>();
+
+        if (limits == null)
+        {
+            return new XmlConversionValidationResult(issues);
+        }
+
+        if (limits.CancellationToken.IsCancellationRequested)
+        {
+            issues.Add(XmlConversionValidationIssue.CreateMessage("conversion_cancelled", "XML conversion was cancelled."));
+        }
+
+        if (limits.Timeout is TimeSpan timeout && elapsed > timeout)
+        {
+            issues.Add(XmlConversionValidationIssue.Create(
+                "conversion_timeout",
+                "Conversion elapsed milliseconds",
+                (long)elapsed.TotalMilliseconds,
+                (long)timeout.TotalMilliseconds));
         }
 
         return new XmlConversionValidationResult(issues);
