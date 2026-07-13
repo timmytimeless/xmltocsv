@@ -16,6 +16,7 @@ namespace Timeless.DataConversion.Tests
         {
             string xmlPath = Path.Combine(TestContext.CurrentContext.WorkDirectory, "large-flat-conversion-benchmark.xml");
             string csvPath = Path.Combine(TestContext.CurrentContext.WorkDirectory, "large-flat-conversion-benchmark.csv");
+            string streamingCsvPath = Path.Combine(TestContext.CurrentContext.WorkDirectory, "large-flat-conversion-benchmark-streaming.csv");
             WriteLargeFlatXml(xmlPath, RowCount);
 
             Stopwatch loadTimer = Stopwatch.StartNew();
@@ -26,16 +27,29 @@ namespace Timeless.DataConversion.Tests
             converter.ExportToCsv("row", csvPath, Encoding.UTF8);
             exportTimer.Stop();
 
+            Stopwatch streamingSchemaTimer = Stopwatch.StartNew();
+            using var streamingConverter = XmlToCsvUsingDataSet.CreateForStreamingExport(xmlPath);
+            streamingSchemaTimer.Stop();
+
+            Stopwatch streamingExportTimer = Stopwatch.StartNew();
+            streamingConverter.ExportToCsv("row", streamingCsvPath, Encoding.UTF8);
+            streamingExportTimer.Stop();
+
             long csvSize = new FileInfo(csvPath).Length;
+            long streamingCsvSize = new FileInfo(streamingCsvPath).Length;
 
             TestContext.Out.WriteLine("Rows: {0}", RowCount);
             TestContext.Out.WriteLine("XML bytes: {0}", new FileInfo(xmlPath).Length);
             TestContext.Out.WriteLine("CSV bytes: {0}", csvSize);
             TestContext.Out.WriteLine("Load ms: {0}", loadTimer.ElapsedMilliseconds);
             TestContext.Out.WriteLine("Export ms: {0}", exportTimer.ElapsedMilliseconds);
+            TestContext.Out.WriteLine("Streaming schema ms: {0}", streamingSchemaTimer.ElapsedMilliseconds);
+            TestContext.Out.WriteLine("Streaming export ms: {0}", streamingExportTimer.ElapsedMilliseconds);
 
             Assert.That(converter.TableNameCollection, Does.Contain("row"));
+            Assert.That(streamingConverter.TableNameCollection, Does.Contain("row"));
             Assert.That(csvSize, Is.GreaterThan(0));
+            Assert.That(streamingCsvSize, Is.EqualTo(csvSize));
         }
 
         private static void WriteLargeFlatXml(string path, int rowCount)

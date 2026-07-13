@@ -2,7 +2,7 @@
 
 Timeless.DataConversion is a .NET 10 solution for converting XML data into one or more CSV files. It contains a reusable NuGet-packable conversion library, a command line tool, and NUnit tests with sample XML files.
 
-The conversion path uses `DataSet.ReadXml` to discover tables in an XML document and export each discovered table to a separate CSV file.
+The conversion path uses `DataSet` schema inference to discover tables in an XML document and export each discovered table to a separate CSV file. The console streams supported flat XML tables to reduce memory use and falls back to DataSet-backed export for more complex shapes.
 
 ## Solution Structure
 
@@ -112,6 +112,7 @@ dotnet test tests/Timeless.DataConversion.Tests/Timeless.DataConversion.Tests.cs
 
 - The projects target .NET 10 and use SDK-style project files.
 - The `DataSet` implementation depends on how `DataSet.ReadXml` infers tables and columns from the XML shape.
+- The console uses streaming export for simple flat tables after DataSet schema inference; unsupported shapes fall back to DataSet-backed export.
 - Deeply nested or ambiguous XML structures can raise framework exceptions during XML loading.
 - The console application writes CSV using `Encoding.Unicode` by default. Use `-encoding utf-8` or another supported .NET encoding name to override it.
 - Generated `bin` and `obj` folders are build outputs and are not needed to understand or modify the source.

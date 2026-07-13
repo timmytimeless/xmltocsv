@@ -24,7 +24,7 @@ namespace Timeless.DataConversion.Console
             cmd.Parse(args);
 
             Encoding encoding = ResolveOutputEncoding(outputEncoding);
-            using var converter = new XmlToCsvUsingDataSet(xmlInputFilePath.Value);
+            using var converter = XmlToCsvUsingDataSet.CreateForStreamingExport(xmlInputFilePath.Value);
             
             foreach (string xmlTableName in converter.TableNameCollection)
             {

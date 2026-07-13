@@ -125,6 +125,47 @@ namespace Timeless.DataConversion.Tests
         }
 
         [Test]
+        public void StreamingExportWritesExpectedCsvContents()
+        {
+            string csvPath = ConvertSingleTableToCsvUsingStreaming(@"TestData/data.xml", "csvRow", Encoding.UTF8);
+
+            string csv = File.ReadAllText(csvPath, Encoding.UTF8);
+
+            Assert.That(csv, Is.EqualTo(
+                "ZIPCode,CityName,StateAbbr,Country" + Environment.NewLine +
+                "\"10001\",\"James Town\",\"NY\",\"USA\"" + Environment.NewLine +
+                "\"10002\",\"Abbrevich\",\"CA\",\"USA\"" + Environment.NewLine +
+                "\"10003\",\"Sommerville\",\"WY\",\"USA\"" + Environment.NewLine +
+                "\"10004\",\"Loveland\",\"TX\",\"USA\"" + Environment.NewLine));
+        }
+
+        [Test]
+        public void StreamingExportFallsBackForUnsupportedTableShapes()
+        {
+            string csvPath = ConvertSingleTableToCsvUsingStreaming(@"TestData/DataWithAttributes.xml", "csvRow", Encoding.UTF8);
+
+            string header = File.ReadLines(csvPath).First();
+
+            Assert.That(header, Does.Contain("attribute"));
+            Assert.That(header, Does.Contain("CityName"));
+        }
+
+        [Test]
+        public void StreamingExportWritesBlankFieldsForMissingValues()
+        {
+            string xmlPath = WriteTempXml(
+                "<?xml version=\"1.0\"?><root><row><Name>First</Name><City>Yalta</City></row><row><Name>Second</Name></row></root>");
+
+            string csvPath = ConvertSingleTableToCsvUsingStreaming(xmlPath, "row", Encoding.UTF8);
+
+            string csv = File.ReadAllText(csvPath, Encoding.UTF8);
+            Assert.That(csv, Is.EqualTo(
+                "Name,City" + Environment.NewLine +
+                "\"First\",\"Yalta\"" + Environment.NewLine +
+                "\"Second\",\"\"" + Environment.NewLine));
+        }
+
+        [Test]
         public void DataSetExportEscapesQuotesAndCommas()
         {
             string xmlPath = WriteTempXml(
@@ -240,6 +281,17 @@ namespace Timeless.DataConversion.Tests
         {
             string csvPath = Path.Combine(TestContext.CurrentContext.WorkDirectory, Path.GetRandomFileName() + ".csv");
             using (var converter = new XmlToCsvUsingDataSet(xmlPath))
+            {
+                converter.ExportToCsv(xmlTableName, csvPath, encoding);
+            }
+
+            return csvPath;
+        }
+
+        private static string ConvertSingleTableToCsvUsingStreaming(string xmlPath, string xmlTableName, Encoding encoding)
+        {
+            string csvPath = Path.Combine(TestContext.CurrentContext.WorkDirectory, Path.GetRandomFileName() + ".csv");
+            using (var converter = XmlToCsvUsingDataSet.CreateForStreamingExport(xmlPath))
             {
                 converter.ExportToCsv(xmlTableName, csvPath, encoding);
             }
