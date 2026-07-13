@@ -7,7 +7,7 @@ namespace Timeless.DataConversion.Console
     public class Program
     {
         /// <summary>
-        /// XML to CSV Command Line Converter. User as follows: Timeless.DataConversion.Console.exe -xml C:\payslip.xml -dir C:\my_output
+        /// XML to CSV Command Line Converter. Use as follows: Timeless.DataConversion.Console.exe -xml C:\payslip.xml -dir C:\my_output
         /// </summary>
         /// <param name="args">First parameter selects the XML file, second parameter specifies the output directory.</param>
         static void Main(string[] args)
@@ -21,12 +21,14 @@ namespace Timeless.DataConversion.Console
             cmd.RegisterParameter(outputDirectory);
             cmd.Parse(args);
 
-            var converter = new XmlToCsvUsingDataSet(xmlInputFilePath.Value);
+            using var converter = new XmlToCsvUsingDataSet(xmlInputFilePath.Value);
+            
             var context = new XmlToCsvContext(converter);
 
             foreach (string xmlTableName in context.Strategy.TableNameCollection)
             {
-                string csvDestinationFilePath = BuildCsvDestinationFilePath(outputDirectory.Value, xmlTableName);
+                var csvDestinationFilePath = BuildCsvDestinationFilePath(outputDirectory.Value, xmlTableName);
+                
                 context.Execute(xmlTableName, csvDestinationFilePath, Encoding.Unicode);
             }
         }
