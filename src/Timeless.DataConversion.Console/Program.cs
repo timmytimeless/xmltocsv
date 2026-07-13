@@ -26,9 +26,14 @@ namespace Timeless.DataConversion.Console
 
             foreach (string xmlTableName in context.Strategy.TableNameCollection)
             {
-                string csvDestinationFilePath = Path.Combine(outputDirectory.Value, xmlTableName + ".csv");
+                string csvDestinationFilePath = BuildCsvDestinationFilePath(outputDirectory.Value, xmlTableName);
                 context.Execute(xmlTableName, csvDestinationFilePath, Encoding.Unicode);
             }
+        }
+
+        internal static string BuildCsvDestinationFilePath(string outputDirectory, string xmlTableName)
+        {
+            return Path.Combine(outputDirectory, xmlTableName + ".csv");
         }
     }
 }

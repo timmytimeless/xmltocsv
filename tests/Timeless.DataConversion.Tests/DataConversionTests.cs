@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Data;
+using System.IO;
 using System.Text;
 using System.Xml.Schema;
 using Timeless.DataConversion.XmlToCsvStrategy;
+using ConsoleProgram = Timeless.DataConversion.Console.Program;
 using NUnit.Framework;
 
 namespace Timeless.DataConversion.Tests
@@ -86,6 +88,16 @@ namespace Timeless.DataConversion.Tests
             {
                 context.Execute(xmlTableName, @"ErrorDuplicateName_" + xmlTableName + ".csv", Encoding.Default);
             }
+        }
+
+        [Test]
+        public void ConsoleOutputPathUsesPlatformDirectorySeparator()
+        {
+            string outputDirectory = Path.Combine("tmp", "csv-output");
+
+            string destinationFilePath = ConsoleProgram.BuildCsvDestinationFilePath(outputDirectory, "Employees");
+
+            Assert.That(destinationFilePath, Is.EqualTo(outputDirectory + Path.DirectorySeparatorChar + "Employees.csv"));
         }
     }
 }

@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Timeless.DataConversion\Timeless.DataConversion.csproj" />
+    <ProjectReference Include="..\..\src\Timeless.DataConversion.Console\Timeless.DataConversion.Console.csproj" />
   </ItemGroup>
 
   <ItemGroup>
