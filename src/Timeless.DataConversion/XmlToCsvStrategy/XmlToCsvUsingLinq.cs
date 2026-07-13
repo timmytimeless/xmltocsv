@@ -19,12 +19,14 @@ namespace Timeless.DataConversion.XmlToCsvStrategy
         {
             _xmlSourceFilePath = @xmlSourceFilePath;
 
-            var ds = new DataSet("ds");
-            ds.ReadXmlSchema(@_xmlSourceFilePath);
-
-            foreach (DataTable table in ds.Tables)
+            using (var ds = new DataSet("ds"))
             {
-                TableNameCollection.Add(table.TableName);
+                ds.ReadXmlSchema(@_xmlSourceFilePath);
+
+                foreach (DataTable table in ds.Tables)
+                {
+                    TableNameCollection.Add(table.TableName);
+                }
             }
         }
 
