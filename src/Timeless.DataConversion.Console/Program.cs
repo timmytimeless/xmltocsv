@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.IO;
+using System.Text;
 using Timeless.DataConversion.XmlToCsvStrategy;
 
 namespace Timeless.DataConversion.Console
@@ -25,7 +26,8 @@ namespace Timeless.DataConversion.Console
 
             foreach (string xmlTableName in context.Strategy.TableNameCollection)
             {
-                context.Execute(xmlTableName, outputDirectory.Value + @"\" + xmlTableName + ".csv", Encoding.Unicode);
+                string csvDestinationFilePath = Path.Combine(outputDirectory.Value, xmlTableName + ".csv");
+                context.Execute(xmlTableName, csvDestinationFilePath, Encoding.Unicode);
             }
         }
     }
