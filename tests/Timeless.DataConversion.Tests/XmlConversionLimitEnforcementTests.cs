@@ -101,7 +101,7 @@ namespace Timeless.DataConversion.Tests
             var preview = XmlToCsvConverter.CreateConversionPreview(xmlPath);
             var confirmation = XmlConversionPlanConfirmation.IncludeAll(preview);
             var outputDirectory = CreateOutputDirectory();
-            var limits = new XmlConversionLimits { MaxRowSubtreeBytes = 10 };
+            var limits = new XmlConversionLimits { MaxRowSubtreeBytes = 1 };
 
             var exception = Assert.Throws<XmlConversionValidationException>(() =>
                 XmlToCsvConverter.ExportConfirmedConversion(xmlPath, outputDirectory, Encoding.UTF8, preview, confirmation, limits));

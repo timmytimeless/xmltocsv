@@ -26,6 +26,7 @@ namespace Timeless.DataConversion.Tests
             Assert.That(orderTable.Columns.Select(item => item.Path), Does.Contain("/orders/order/customer"));
             Assert.That(orderTable.Columns.Select(item => item.Path), Does.Contain("/orders/order/number"));
             Assert.That(orderTable.Reasons, Does.Contain("repeated sibling element"));
+            Assert.That(orderTable.Reasons, Has.Some.Contains("stable structure"));
         }
 
         [Test]

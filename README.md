@@ -2,9 +2,9 @@
 
 Timeless.DataConversion is a .NET 10 solution for converting XML data into one or more CSV files. It contains a reusable NuGet-packable conversion library, a command line tool, and NUnit tests with sample XML files.
 
-The legacy conversion path uses `DataSet` schema inference to discover tables in an XML document and export each discovered table to a separate CSV file. The console uses that path with streaming export for supported flat tables and falls back to DataSet-backed export for more complex shapes.
+The legacy conversion path uses `DataSet` schema inference to discover tables in an XML document and export each discovered table to a separate CSV file. It remains available for callers that need the original behavior.
 
-The library also contains newer public-facing conversion APIs that profile XML with `XmlReader`, infer candidate tables, build a conversion preview, allow callers to confirm or rename tables and columns, and export inferred tables as related CSV files with generated row IDs.
+The public conversion path profiles XML with `XmlReader`, infers candidate tables, builds a conversion preview, allows callers to confirm or rename tables and columns, and exports inferred tables as related CSV files with generated row IDs. The console application uses this public workflow.
 
 ## Solution Structure
 
@@ -22,6 +22,7 @@ The library also contains newer public-facing conversion APIs that profile XML w
 - Exports each discovered XML table as a separate CSV file.
 - Profiles XML structure with a streaming reader for preview-driven conversion workflows.
 - Infers candidate parent and child tables from repeated XML paths.
+- Scores inferred tables with repeated-path, leaf-column, row-count, and structural-signature signals.
 - Creates conversion previews with tables, columns, child table relationships, inference scores, reasons, and warnings.
 - Allows callers to confirm, exclude, and rename inferred tables and columns before export.
 - Exports inferred nested tables with `_row_id` and `_parent_row_id` columns.
@@ -59,10 +60,16 @@ dotnet pack src/Timeless.DataConversion/Timeless.DataConversion.csproj --configu
 
 ## Command Line Usage
 
-After building `Timeless.DataConversion.Console`, run:
+After building `Timeless.DataConversion.Console`, export CSV files to a directory with:
 
 ```bat
 Timeless.DataConversion.Console.exe -xml C:\path\input.xml -dir C:\path\output -encoding utf-8
+```
+
+To produce a zip archive instead, pass `-zip`:
+
+```bat
+Timeless.DataConversion.Console.exe -xml C:\path\input.xml -zip C:\path\output.zip -encoding utf-8
 ```
 
 Arguments:
@@ -70,11 +77,12 @@ Arguments:
 | Argument | Description |
 | --- | --- |
 | `-xml` | Path to the source XML file. |
-| `-dir` | Directory where generated CSV files should be written. |
+| `-dir` | Directory where generated CSV files should be written. Required unless `-zip` is supplied. |
+| `-zip` | Optional zip archive path for the generated CSV files. |
 | `-encoding` | Optional CSV output encoding. Defaults to `unicode`. Example: `utf-8`. |
 | `-help` | Prints command line help. |
 
-The console application writes one CSV file per discovered XML table using the table name as the file name.
+The console application writes one CSV file per inferred XML table using the table name as the file name. Nested tables are exported as related CSV files with `_row_id` and `_parent_row_id`.
 
 ## Library Usage
 
@@ -182,7 +190,7 @@ Current coverage includes:
 - DataSet-based conversion.
 - Streaming flat-table export.
 - Structural profiling.
-- Table-plan inference.
+- Table-plan inference with structural-signature scoring.
 - Conversion preview and confirmation.
 - Inferred nested-table export with generated row IDs and parent row IDs.
 - Zip export.
@@ -206,11 +214,11 @@ dotnet test tests/Timeless.DataConversion.Tests/Timeless.DataConversion.Tests.cs
 
 - The projects target .NET 10 and use SDK-style project files.
 - The `DataSet` implementation depends on how `DataSet.ReadXml` infers tables and columns from the XML shape.
-- The console uses streaming export for simple flat tables after DataSet schema inference; unsupported shapes fall back to DataSet-backed export.
+- The console uses the public preview and confirmed-export workflow, not the legacy DataSet path.
 - The preview-driven APIs infer a practical table plan from XML structure; XML-to-CSV conversion is not uniquely defined for every possible XML shape.
 - Inferred table export writes generated relationship columns rather than preserving every XML hierarchy detail in a single flat CSV.
 - The public conversion service rejects ambiguous plans; lower-level APIs keep ambiguity rejection opt-in through `XmlConversionLimits.RejectAmbiguousPlans`.
-- The exporter streams the source XML document, but each matched row subtree is materialized while writing that row. Use `MaxRowSubtreeBytes` for hosted workflows that need to bound this.
+- The inferred-table exporter streams field values without materializing full row subtrees. Use `MaxRowSubtreeBytes` to bound the cumulative streamed scalar values held for a row.
 - Deeply nested or ambiguous XML structures can raise framework exceptions during XML loading.
 - The console application writes CSV using `Encoding.Unicode` by default. Use `-encoding utf-8` or another supported .NET encoding name to override it.
 - Generated `bin` and `obj` folders are build outputs and are not needed to understand or modify the source.

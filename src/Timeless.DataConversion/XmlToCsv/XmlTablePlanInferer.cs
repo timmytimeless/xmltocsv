@@ -66,7 +66,19 @@ public sealed class XmlTablePlanInferer
             score += 10;
         }
 
+        if (HasStableRepeatedStructure(pathProfile))
+        {
+            score += 20;
+        }
+
         return score;
+    }
+
+    private static bool HasStableRepeatedStructure(XmlPathProfile pathProfile)
+    {
+        return pathProfile.OccurrenceCount > 1 &&
+               pathProfile.StructureSignatureCount > 0 &&
+               pathProfile.DominantStructureSignatureCount * 100 / pathProfile.OccurrenceCount >= 80;
     }
 
     private static IEnumerable<XmlInferredColumn> CreateColumns(XmlStructuralProfile profile, IEnumerable<string> columnPaths)
@@ -109,6 +121,15 @@ public sealed class XmlTablePlanInferer
         if (columnPaths.Count > 0)
         {
             yield return string.Format(CultureInfo.InvariantCulture, "{0} candidate columns", columnPaths.Count);
+        }
+
+        if (HasStableRepeatedStructure(pathProfile))
+        {
+            yield return string.Format(
+                CultureInfo.InvariantCulture,
+                "stable structure across {0} of {1} rows",
+                pathProfile.DominantStructureSignatureCount,
+                pathProfile.OccurrenceCount);
         }
 
         yield return string.Format(CultureInfo.InvariantCulture, "score {0}", score);

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Xml;
 
 namespace Timeless.DataConversion.XmlToCsv;
@@ -173,6 +174,7 @@ public sealed class XmlStructuralProfiler
         while (reader.MoveToNextAttribute())
         {
             string attributePath = frame.Path + "/@" + reader.LocalName;
+            frame.AttributeNames.Add(reader.LocalName);
             XmlPathProfile attributeProfile = GetPathProfile(attributePaths, attributePath);
             attributeProfile.OccurrenceCount++;
             attributeProfile.MaxDepth = System.Math.Max(attributeProfile.MaxDepth, elementDepth);
@@ -196,11 +198,25 @@ public sealed class XmlStructuralProfiler
         ElementFrame frame = stack.Pop();
         XmlPathProfile profile = elementPaths[frame.Path];
         profile.TypeHints.Observe(frame.Text.ToString());
+        AddStructureSignature(profile, frame);
 
         if (!frame.HasChildElements)
         {
             AddLeafColumnToParent(stack, frame.Path, candidateColumnsByRowPath);
         }
+    }
+
+    private static void AddStructureSignature(XmlPathProfile profile, ElementFrame frame)
+    {
+        var parts = new List<string>();
+        parts.AddRange(frame.AttributeNames.OrderBy(item => item).Select(item => "@" + item));
+        parts.AddRange(frame.ChildOccurrenceCounts.Keys
+            .Select(GetLastPathSegment)
+            .OrderBy(item => item));
+
+        string signature = string.Join("|", parts);
+        profile.StructureSignatures.TryGetValue(signature, out long count);
+        profile.StructureSignatures[signature] = count + 1;
     }
 
     private static void AddLeafColumnToParent(
@@ -265,6 +281,12 @@ public sealed class XmlStructuralProfiler
         return string.IsNullOrEmpty(parentPath) ? "/" + localName : parentPath + "/" + localName;
     }
 
+    private static string GetLastPathSegment(string path)
+    {
+        int index = path.LastIndexOf('/');
+        return index >= 0 ? path.Substring(index + 1) : path;
+    }
+
     private static XmlReaderSettings CreateReaderSettings()
     {
         return new XmlReaderSettings
@@ -282,11 +304,13 @@ public sealed class XmlStructuralProfiler
             Path = path;
             Text = new System.Text.StringBuilder();
             ChildOccurrenceCounts = new Dictionary<string, int>();
+            AttributeNames = new List<string>();
         }
 
         public string Path { get; }
         public bool HasChildElements { get; set; }
         public System.Text.StringBuilder Text { get; }
         public Dictionary<string, int> ChildOccurrenceCounts { get; }
+        public List<string> AttributeNames { get; }
     }
 }

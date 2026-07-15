@@ -110,6 +110,26 @@ namespace Timeless.DataConversion.Tests
         }
 
         [Test]
+        public void ConsoleUsesPublicPreviewWorkflowForNestedXml()
+        {
+            string xmlPath = Path.Combine(TestContext.CurrentContext.WorkDirectory, Path.GetRandomFileName() + ".xml");
+            string outputDirectory = Path.Combine(TestContext.CurrentContext.WorkDirectory, Path.GetRandomFileName());
+            File.WriteAllText(
+                xmlPath,
+                "<?xml version=\"1.0\"?>" +
+                "<orders>" +
+                "<order id=\"100\"><number>100</number><items><item sku=\"A\"><quantity>2</quantity></item></items></order>" +
+                "<order id=\"101\"><number>101</number><items><item sku=\"B\"><quantity>3</quantity></item></items></order>" +
+                "</orders>",
+                Encoding.UTF8);
+
+            ConsoleProgram.Main(new[] { "-xml", xmlPath, "-dir", outputDirectory, "-encoding", "utf-8" });
+
+            Assert.That(File.Exists(Path.Combine(outputDirectory, "orders_order.csv")), Is.True);
+            Assert.That(File.Exists(Path.Combine(outputDirectory, "items_item.csv")), Is.True);
+        }
+
+        [Test]
         public void DataSetExportWritesExpectedCsvContents()
         {
             string csvPath = ConvertSingleTableToCsv(@"TestData/data.xml", "csvRow", Encoding.UTF8);

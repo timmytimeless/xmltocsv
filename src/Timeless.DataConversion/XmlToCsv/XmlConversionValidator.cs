@@ -89,13 +89,13 @@ public sealed class XmlConversionValidator
                 "Multiple inferred tables use the CSV name '" + duplicateNameGroup.Key + "'. Rename one before export."));
         }
 
-        foreach (XmlInferredTable table in plan.Tables.Where(item => item.Score < 80))
+        foreach (XmlInferredTable table in plan.Tables.Where(item => item.Score < 70))
         {
             issues.Add(XmlConversionValidationIssue.Create(
                 "low_confidence_table",
                 "Inference score for table '" + table.Name + "'",
                 table.Score,
-                80));
+                70));
         }
 
         foreach (XmlInferredTable table in plan.Tables.Where(item => item.Columns.Count == 0))
