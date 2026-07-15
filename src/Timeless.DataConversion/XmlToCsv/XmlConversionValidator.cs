@@ -77,6 +77,34 @@ public sealed class XmlConversionValidator
             }
         }
 
+        if (!limits.RejectAmbiguousPlans)
+        {
+            return new XmlConversionValidationResult(issues);
+        }
+
+        foreach (IGrouping<string, XmlInferredTable> duplicateNameGroup in plan.Tables.GroupBy(item => item.Name).Where(item => item.Count() > 1))
+        {
+            issues.Add(XmlConversionValidationIssue.CreateMessage(
+                "duplicate_table_name",
+                "Multiple inferred tables use the CSV name '" + duplicateNameGroup.Key + "'. Rename one before export."));
+        }
+
+        foreach (XmlInferredTable table in plan.Tables.Where(item => item.Score < 80))
+        {
+            issues.Add(XmlConversionValidationIssue.Create(
+                "low_confidence_table",
+                "Inference score for table '" + table.Name + "'",
+                table.Score,
+                80));
+        }
+
+        foreach (XmlInferredTable table in plan.Tables.Where(item => item.Columns.Count == 0))
+        {
+            issues.Add(XmlConversionValidationIssue.CreateMessage(
+                "table_without_columns",
+                "Table '" + table.Name + "' has no inferred columns and requires mapping or exclusion."));
+        }
+
         return new XmlConversionValidationResult(issues);
     }
 
@@ -93,6 +121,23 @@ public sealed class XmlConversionValidator
             if (outputBytes > maxOutputBytes)
             {
                 issues.Add(XmlConversionValidationIssue.Create("max_output_bytes", "Output size in bytes", outputBytes, maxOutputBytes));
+            }
+        }
+
+        return new XmlConversionValidationResult(issues);
+    }
+
+    public XmlConversionValidationResult ValidateOutputZipFile(string outputZipPath, XmlConversionLimits limits)
+    {
+        var issues = new List<XmlConversionValidationIssue>();
+
+        if (limits?.MaxOutputZipBytes is long maxOutputZipBytes)
+        {
+            long outputBytes = File.Exists(outputZipPath) ? new FileInfo(outputZipPath).Length : 0;
+
+            if (outputBytes > maxOutputZipBytes)
+            {
+                issues.Add(XmlConversionValidationIssue.Create("max_output_zip_bytes", "Output zip size in bytes", outputBytes, maxOutputZipBytes));
             }
         }
 

@@ -11,6 +11,9 @@ public sealed class XmlConversionLimits
     public int? MaxColumnsPerTable { get; set; }
     public int? MaxGeneratedCsvFiles { get; set; }
     public long? MaxOutputBytes { get; set; }
+    public long? MaxOutputZipBytes { get; set; }
+    public long? MaxRowSubtreeBytes { get; set; }
     public TimeSpan? Timeout { get; set; }
     public CancellationToken CancellationToken { get; set; }
+    public bool RejectAmbiguousPlans { get; set; }
 }

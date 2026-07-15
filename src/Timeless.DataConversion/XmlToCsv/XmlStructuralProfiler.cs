@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Xml;
 
@@ -9,16 +10,22 @@ public sealed class XmlStructuralProfiler
     public XmlStructuralProfile Profile(string xmlSourceFilePath)
     {
         using XmlReader reader = XmlReader.Create(xmlSourceFilePath, CreateReaderSettings());
-        return Profile(reader);
+        return Profile(reader, null, null);
+    }
+
+    public XmlStructuralProfile Profile(string xmlSourceFilePath, XmlConversionLimits limits, Stopwatch timer)
+    {
+        using XmlReader reader = XmlReader.Create(xmlSourceFilePath, CreateReaderSettings());
+        return Profile(reader, limits, timer);
     }
 
     public XmlStructuralProfile Profile(Stream xmlSource)
     {
         using XmlReader reader = XmlReader.Create(xmlSource, CreateReaderSettings());
-        return Profile(reader);
+        return Profile(reader, null, null);
     }
 
-    private static XmlStructuralProfile Profile(XmlReader reader)
+    private static XmlStructuralProfile Profile(XmlReader reader, XmlConversionLimits limits, Stopwatch timer)
     {
         var elementPaths = new Dictionary<string, XmlPathProfile>();
         var attributePaths = new Dictionary<string, XmlPathProfile>();
@@ -29,6 +36,8 @@ public sealed class XmlStructuralProfiler
 
         while (reader.Read())
         {
+            ThrowIfExecutionLimitExceeded(timer, limits);
+
             switch (reader.NodeType)
             {
                 case XmlNodeType.Element:
@@ -46,10 +55,62 @@ public sealed class XmlStructuralProfiler
                     CompleteElement(stack, candidateColumnsByRowPath, elementPaths);
                     break;
             }
+
+            ThrowIfUniquePathLimitExceeded(elementPaths, attributePaths, limits);
         }
 
         var candidateRowPaths = InferCandidateRowPaths(elementPaths, candidateColumnsByRowPath);
         return new XmlStructuralProfile(elementPaths, attributePaths, repeatedElementPaths, candidateColumnsByRowPath, candidateRowPaths, maxDepth);
+    }
+
+    private static void ThrowIfUniquePathLimitExceeded(
+        Dictionary<string, XmlPathProfile> elementPaths,
+        Dictionary<string, XmlPathProfile> attributePaths,
+        XmlConversionLimits limits)
+    {
+        if (limits?.MaxUniquePaths is not int maxUniquePaths)
+        {
+            return;
+        }
+
+        int uniquePaths = elementPaths.Count + attributePaths.Count;
+
+        if (uniquePaths > maxUniquePaths)
+        {
+            throw new XmlConversionValidationException(new XmlConversionValidationResult(new[]
+            {
+                XmlConversionValidationIssue.Create("max_unique_paths", "Unique XML paths", uniquePaths, maxUniquePaths)
+            }));
+        }
+    }
+
+    private static void ThrowIfExecutionLimitExceeded(Stopwatch timer, XmlConversionLimits limits)
+    {
+        if (limits == null)
+        {
+            return;
+        }
+
+        var issues = new List<XmlConversionValidationIssue>();
+
+        if (limits.CancellationToken.IsCancellationRequested)
+        {
+            issues.Add(XmlConversionValidationIssue.CreateMessage("conversion_cancelled", "XML conversion was cancelled."));
+        }
+
+        if (timer != null && limits.Timeout is System.TimeSpan timeout && timer.Elapsed > timeout)
+        {
+            issues.Add(XmlConversionValidationIssue.Create(
+                "conversion_timeout",
+                "Conversion elapsed milliseconds",
+                (long)timer.Elapsed.TotalMilliseconds,
+                (long)timeout.TotalMilliseconds));
+        }
+
+        if (issues.Count > 0)
+        {
+            throw new XmlConversionValidationException(new XmlConversionValidationResult(issues));
+        }
     }
 
     private static void ProcessElement(

@@ -25,7 +25,9 @@ The library also contains newer public-facing conversion APIs that profile XML w
 - Creates conversion previews with tables, columns, child table relationships, inference scores, reasons, and warnings.
 - Allows callers to confirm, exclude, and rename inferred tables and columns before export.
 - Exports inferred nested tables with `_row_id` and `_parent_row_id` columns.
-- Supports configurable conversion limits for file size, XML depth, unique paths, generated CSV count, column count, output size, timeout, and cancellation.
+- Exports confirmed conversions to a zip archive.
+- Supports configurable conversion limits for file size, XML depth, unique paths, generated CSV count, column count, output directory size, output zip size, row subtree size, timeout, and cancellation.
+- Provides a public conversion service facade for hosted or GUI workflows that should reject ambiguous inferred plans before export.
 - Escapes double quotes in string values for CSV output.
 - Replaces line breaks inside string values before writing CSV rows.
 - Detects duplicate XML table and column naming conflicts.
@@ -145,11 +147,28 @@ var limits = new XmlConversionLimits
     MaxColumnsPerTable = 250,
     MaxGeneratedCsvFiles = 50,
     MaxOutputBytes = 250 * 1024 * 1024,
+    MaxOutputZipBytes = 250 * 1024 * 1024,
+    MaxRowSubtreeBytes = 5 * 1024 * 1024,
     Timeout = TimeSpan.FromMinutes(2)
 };
 
 XmlConversionPreview preview = XmlToCsvConverter.CreateConversionPreview(@"C:\path\input.xml", limits);
 XmlToCsvConverter.ExportInferredTables(@"C:\path\input.xml", @"C:\path\output", Encoding.UTF8, preview.InferredPlan, limits);
+```
+
+Use `XmlPublicConversionService` as the API entry point for future website or GUI workflows. It enables ambiguous-plan rejection and exposes preview, confirmation, directory export, and zip export operations:
+
+```csharp
+var service = new XmlPublicConversionService(limits);
+XmlConversionPreview preview = service.CreatePreview(@"C:\path\input.xml");
+XmlConversionPlanConfirmation confirmation = XmlConversionPlanConfirmation.IncludeAll(preview);
+
+service.ExportConfirmedConversionToZip(
+    @"C:\path\input.xml",
+    @"C:\path\output.zip",
+    Encoding.UTF8,
+    preview,
+    confirmation);
 ```
 
 Limit failures throw `XmlConversionValidationException` with structured validation issues that callers can display or log.
@@ -166,7 +185,9 @@ Current coverage includes:
 - Table-plan inference.
 - Conversion preview and confirmation.
 - Inferred nested-table export with generated row IDs and parent row IDs.
-- Conversion limit validation and enforcement.
+- Zip export.
+- Conversion limit validation and enforcement, including in-loop profiling/export checks.
+- Public-service ambiguity rejection for low-confidence, duplicate-name, or empty-column table plans.
 - XML attributes.
 - CSV escaping for double quotes.
 - Nested XML structures that throw schema-loading exceptions.
@@ -188,6 +209,8 @@ dotnet test tests/Timeless.DataConversion.Tests/Timeless.DataConversion.Tests.cs
 - The console uses streaming export for simple flat tables after DataSet schema inference; unsupported shapes fall back to DataSet-backed export.
 - The preview-driven APIs infer a practical table plan from XML structure; XML-to-CSV conversion is not uniquely defined for every possible XML shape.
 - Inferred table export writes generated relationship columns rather than preserving every XML hierarchy detail in a single flat CSV.
+- The public conversion service rejects ambiguous plans; lower-level APIs keep ambiguity rejection opt-in through `XmlConversionLimits.RejectAmbiguousPlans`.
+- The exporter streams the source XML document, but each matched row subtree is materialized while writing that row. Use `MaxRowSubtreeBytes` for hosted workflows that need to bound this.
 - Deeply nested or ambiguous XML structures can raise framework exceptions during XML loading.
 - The console application writes CSV using `Encoding.Unicode` by default. Use `-encoding utf-8` or another supported .NET encoding name to override it.
 - Generated `bin` and `obj` folders are build outputs and are not needed to understand or modify the source.

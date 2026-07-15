@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Xml;
@@ -149,7 +150,7 @@ public sealed class XmlToCsvConverter : IDisposable
         ThrowIfInvalid(validator.ValidateSourceFile(xmlSourceFilePath, limits));
         ThrowIfInvalid(validator.ValidateExecution(timer.Elapsed, limits));
 
-        XmlStructuralProfile profile = new XmlStructuralProfiler().Profile(xmlSourceFilePath);
+        XmlStructuralProfile profile = new XmlStructuralProfiler().Profile(xmlSourceFilePath, limits, timer);
         ThrowIfInvalid(validator.ValidateStructuralProfile(profile, limits));
         ThrowIfInvalid(validator.ValidateExecution(timer.Elapsed, limits));
 
@@ -264,6 +265,17 @@ public sealed class XmlToCsvConverter : IDisposable
 
     public static void ExportInferredTables(string xmlSourceFilePath, string destinationDirectory, Encoding encoding, XmlInferredTablePlan plan)
     {
+        ExportInferredTables(xmlSourceFilePath, destinationDirectory, encoding, plan, null, null);
+    }
+
+    private static void ExportInferredTables(
+        string xmlSourceFilePath,
+        string destinationDirectory,
+        Encoding encoding,
+        XmlInferredTablePlan plan,
+        XmlConversionLimits limits,
+        Stopwatch timer)
+    {
         if (string.IsNullOrEmpty(destinationDirectory))
         {
             throw new NotSupportedException("Destination directory for inferred table export is not specified");
@@ -285,6 +297,8 @@ public sealed class XmlToCsvConverter : IDisposable
 
             while (!reader.EOF)
             {
+                ThrowIfExecutionLimitExceeded(timer, limits);
+
                 if (reader.NodeType == XmlNodeType.None)
                 {
                     if (!reader.Read())
@@ -316,6 +330,8 @@ public sealed class XmlToCsvConverter : IDisposable
                 if (exportState.TryGetRootTable(path, out XmlInferredTable table))
                 {
                     var row = (XElement)XNode.ReadFrom(reader);
+                    ThrowIfRowSubtreeLimitExceeded(row, limits);
+                    ThrowIfExecutionLimitExceeded(timer, limits);
                     exportState.WriteRow(table, row, null);
                     continue;
                 }
@@ -367,10 +383,63 @@ public sealed class XmlToCsvConverter : IDisposable
         ThrowIfInvalid(validator.ValidateTablePlan(plan, limits));
         ThrowIfInvalid(validator.ValidateExecution(timer.Elapsed, limits));
 
-        ExportInferredTables(xmlSourceFilePath, destinationDirectory, encoding, plan);
+        ExportInferredTables(xmlSourceFilePath, destinationDirectory, encoding, plan, limits, timer);
 
         ThrowIfInvalid(validator.ValidateExecution(timer.Elapsed, limits));
         ThrowIfInvalid(validator.ValidateOutputDirectory(destinationDirectory, limits));
+    }
+
+    public static void ExportConfirmedConversionToZip(
+        string xmlSourceFilePath,
+        string destinationZipPath,
+        Encoding encoding,
+        XmlConversionPreview preview,
+        XmlConversionPlanConfirmation confirmation,
+        XmlConversionLimits limits)
+    {
+        XmlInferredTablePlan confirmedPlan = ConfirmConversionPlan(preview, confirmation);
+        ExportInferredTablesToZip(xmlSourceFilePath, destinationZipPath, encoding, confirmedPlan, limits);
+    }
+
+    public static void ExportInferredTablesToZip(
+        string xmlSourceFilePath,
+        string destinationZipPath,
+        Encoding encoding,
+        XmlInferredTablePlan plan,
+        XmlConversionLimits limits)
+    {
+        if (string.IsNullOrEmpty(destinationZipPath))
+        {
+            throw new NotSupportedException("Destination zip path for inferred table export is not specified");
+        }
+
+        string tempDirectory = Path.Combine(Path.GetTempPath(), "Timeless.DataConversion." + Guid.NewGuid().ToString("N"));
+
+        try
+        {
+            ExportInferredTables(xmlSourceFilePath, tempDirectory, encoding, plan, limits);
+
+            string parentDirectory = Path.GetDirectoryName(destinationZipPath);
+            if (!string.IsNullOrEmpty(parentDirectory))
+            {
+                Directory.CreateDirectory(parentDirectory);
+            }
+
+            if (File.Exists(destinationZipPath))
+            {
+                File.Delete(destinationZipPath);
+            }
+
+            ZipFile.CreateFromDirectory(tempDirectory, destinationZipPath, CompressionLevel.Fastest, false);
+            ThrowIfInvalid(new XmlConversionValidator().ValidateOutputZipFile(destinationZipPath, limits));
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, true);
+            }
+        }
     }
 
     private void EnsureDataLoaded()
@@ -406,6 +475,29 @@ public sealed class XmlToCsvConverter : IDisposable
         if (!result.IsValid)
         {
             throw new XmlConversionValidationException(result);
+        }
+    }
+
+    private static void ThrowIfExecutionLimitExceeded(Stopwatch timer, XmlConversionLimits limits)
+    {
+        ThrowIfInvalid(new XmlConversionValidator().ValidateExecution(timer?.Elapsed ?? TimeSpan.Zero, limits));
+    }
+
+    private static void ThrowIfRowSubtreeLimitExceeded(XElement row, XmlConversionLimits limits)
+    {
+        if (limits?.MaxRowSubtreeBytes is not long maxRowSubtreeBytes)
+        {
+            return;
+        }
+
+        long rowBytes = Encoding.UTF8.GetByteCount(row.ToString(SaveOptions.DisableFormatting));
+
+        if (rowBytes > maxRowSubtreeBytes)
+        {
+            ThrowIfInvalid(new XmlConversionValidationResult(new[]
+            {
+                XmlConversionValidationIssue.Create("max_row_subtree_bytes", "Row XML subtree size in bytes", rowBytes, maxRowSubtreeBytes)
+            }));
         }
     }
 
