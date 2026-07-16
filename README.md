@@ -2,6 +2,8 @@
 
 Timeless.DataConversion is a .NET 10 solution for converting XML data into one or more CSV files. It contains a reusable NuGet-packable conversion library, a command line tool, and NUnit tests with sample XML files.
 
+NuGet package: [Timeless.DataConversion](https://www.nuget.org/packages/Timeless.DataConversion/)
+
 The legacy conversion path uses `DataSet` schema inference to discover tables in an XML document and export each discovered table to a separate CSV file. It remains available for callers that need the original behavior.
 
 The public conversion path profiles XML with `XmlReader`, infers candidate tables, builds a conversion preview, allows callers to confirm or rename tables and columns, and exports inferred tables as related CSV files with generated row IDs. The console application uses this public workflow.
