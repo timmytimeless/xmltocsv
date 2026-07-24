@@ -4,7 +4,10 @@ Timeless.DataConversion is a .NET 10 solution for converting XML data into one o
 
 NuGet package: [Timeless.DataConversion](https://www.nuget.org/packages/Timeless.DataConversion/)
 
-For one-off conversions, you may use [tidelose.com](https://www.tidelose.com), which is based on this project and its NuGet package.
+Need a quick conversion without installing .NET? Try the
+[free online XML to CSV converter](https://www.tidelose.com/converter/xmltocsv)
+to preview detected tables, handle nested XML, and download the results as CSV files.
+The hosted converter is based on this project and its NuGet package.
 
 The legacy conversion path uses `DataSet` schema inference to discover tables in an XML document and export each discovered table to a separate CSV file. It remains available for callers that need the original behavior.
 

@@ -11,10 +11,13 @@
     <Version>3.2.1</Version>
     <Authors>Timeless</Authors>
     <Company>Timeless</Company>
-    <Description>API to convert XML data into CSV data.</Description>
+    <Description>Convert XML into one or more CSV files with streaming previews, nested table inference, relationship columns, validation, and configurable safety limits.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageTags>xml;csv;conversion</PackageTags>
+    <PackageProjectUrl>https://www.tidelose.com/converter/xmltocsv</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/timmytimeless/xmltocsv</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>xml;csv;xml-to-csv;conversion;converter;data-conversion</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
