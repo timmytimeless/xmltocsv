@@ -9,6 +9,26 @@ namespace Timeless.DataConversion.Tests
     public class XmlInferredTableExportTests
     {
         [Test]
+        public void ExportSingleStructuredRecordWritesOneCompleteRow()
+        {
+            string xmlPath = WriteTempXml(
+                "<bookstore><book category=\"cooking\">" +
+                "<title lang=\"en\">Everyday Italian</title>" +
+                "<author>Giada De Laurentiis</author><year>2005</year><price>30.00</price>" +
+                "</book></bookstore>");
+            string outputDirectory = CreateOutputDirectory();
+
+            XmlToCsvConverter.ExportInferredTables(xmlPath, outputDirectory, Encoding.UTF8);
+
+            string csv = File.ReadAllText(Path.Combine(outputDirectory, "bookstore_book.csv"), Encoding.UTF8);
+            Assert.That(csv, Does.Contain("category"));
+            Assert.That(csv, Does.Contain("lang"));
+            Assert.That(csv, Does.Contain("Everyday Italian"));
+            Assert.That(csv, Does.Contain("Giada De Laurentiis"));
+            Assert.That(csv, Does.Contain("30.00"));
+        }
+
+        [Test]
         public void ExportInferredTablesWritesOneCsvPerInferredTable()
         {
             string xmlPath = WriteTempXml(

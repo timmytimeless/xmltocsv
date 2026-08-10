@@ -8,10 +8,11 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <IsPackable>true</IsPackable>
     <PackageId>Timeless.DataConversion</PackageId>
-    <Version>3.3.1</Version>
+    <Version>3.3.2</Version>
     <Authors>Timeless</Authors>
     <Company>Timeless</Company>
     <Description>Convert XML into one or more CSV files with streaming previews, nested table inference, relationship columns, validation, and configurable safety limits.</Description>
+    <PackageReleaseNotes>Supports XML containing a single structured record by inferring a one-row CSV table, and preserves attributes on leaf elements such as title/@lang in the inferred parent row.</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://www.tidelose.com/converter/xmltocsv</PackageProjectUrl>

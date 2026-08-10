@@ -202,7 +202,27 @@ public sealed class XmlStructuralProfiler
 
         if (!frame.HasChildElements)
         {
+            AddLeafAttributesToParent(stack, frame, candidateColumnsByRowPath);
             AddLeafColumnToParent(stack, frame.Path, candidateColumnsByRowPath);
+        }
+    }
+
+    private static void AddLeafAttributesToParent(
+        Stack<ElementFrame> stack,
+        ElementFrame frame,
+        Dictionary<string, HashSet<string>> candidateColumnsByRowPath)
+    {
+        if (stack.Count == 0)
+        {
+            return;
+        }
+
+        foreach (string attributeName in frame.AttributeNames)
+        {
+            AddCandidateColumn(
+                candidateColumnsByRowPath,
+                stack.Peek().Path,
+                frame.Path + "/@" + attributeName);
         }
     }
 
@@ -246,6 +266,21 @@ public sealed class XmlStructuralProfiler
             }
 
             if (profile.OccurrenceCount > 1 || profile.IsRepeatedElement)
+            {
+                candidateRowPaths.Add(item.Key);
+            }
+        }
+
+        if (candidateRowPaths.Count == 0)
+        {
+            int strongestColumnCount = candidateColumnsByRowPath
+                .Where(item => elementPaths.ContainsKey(item.Key))
+                .Select(item => item.Value.Count)
+                .DefaultIfEmpty(0)
+                .Max();
+
+            foreach (KeyValuePair<string, HashSet<string>> item in candidateColumnsByRowPath
+                         .Where(item => item.Value.Count == strongestColumnCount && strongestColumnCount > 0))
             {
                 candidateRowPaths.Add(item.Key);
             }

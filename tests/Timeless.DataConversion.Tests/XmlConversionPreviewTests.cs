@@ -32,7 +32,7 @@ namespace Timeless.DataConversion.Tests
         }
 
         [Test]
-        public void CreateConversionPreviewWarnsWhenNoTablesAreInferred()
+        public void CreateConversionPreviewTreatsASingleStructuredRecordAsOneRow()
         {
             string xmlPath = WriteTempXml(
                 "<?xml version=\"1.0\"?>" +
@@ -40,7 +40,37 @@ namespace Timeless.DataConversion.Tests
 
             XmlConversionPreview preview = XmlToCsvConverter.CreateConversionPreview(xmlPath);
 
-            Assert.That(preview.Warnings, Has.Some.Contains("No candidate tables"));
+            XmlTablePreview table = preview.Tables.Single();
+            Assert.That(table.Path, Is.EqualTo("/root"));
+            Assert.That(table.RowCount, Is.EqualTo(1));
+            Assert.That(table.Columns.Single().Path, Is.EqualTo("/root/name"));
+            Assert.That(preview.Warnings, Has.None.Contains("No candidate tables"));
+        }
+
+        [Test]
+        public void CreateConversionPreviewPreservesSingleRecordLeafAttributes()
+        {
+            string xmlPath = WriteTempXml(
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+                "<bookstore><book category=\"cooking\">" +
+                "<title lang=\"en\">Everyday Italian</title>" +
+                "<author>Giada De Laurentiis</author><year>2005</year><price>30.00</price>" +
+                "</book></bookstore>");
+
+            XmlConversionPreview preview = XmlToCsvConverter.CreateConversionPreview(xmlPath);
+            XmlTablePreview table = preview.Tables.Single();
+
+            Assert.That(table.Path, Is.EqualTo("/bookstore/book"));
+            Assert.That(table.RowCount, Is.EqualTo(1));
+            Assert.That(table.Columns.Select(item => item.Path), Is.EquivalentTo(new[]
+            {
+                "/bookstore/book/@category",
+                "/bookstore/book/title",
+                "/bookstore/book/title/@lang",
+                "/bookstore/book/author",
+                "/bookstore/book/year",
+                "/bookstore/book/price"
+            }));
         }
 
         [Test]
