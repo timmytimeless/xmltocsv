@@ -137,6 +137,7 @@ XmlConversionSample sample = XmlToCsvConverter.CreateConfirmedConversionSample(
     preview,
     confirmation,
     maximumRowsPerTable: 10,
+    maximumCharactersPerValue: 500,
     limits: new XmlConversionLimits());
 
 XmlTablePlanConfirmation firstTable = confirmation.Tables[0];

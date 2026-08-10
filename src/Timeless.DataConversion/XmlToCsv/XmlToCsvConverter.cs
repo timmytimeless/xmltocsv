@@ -268,11 +268,17 @@ public sealed class XmlToCsvConverter : IDisposable
         XmlConversionPreview preview,
         XmlConversionPlanConfirmation confirmation,
         int maximumRowsPerTable,
+        int maximumCharactersPerValue,
         XmlConversionLimits limits)
     {
         if (maximumRowsPerTable <= 0)
         {
             throw new ArgumentOutOfRangeException(nameof(maximumRowsPerTable));
+        }
+
+        if (maximumCharactersPerValue <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maximumCharactersPerValue));
         }
 
         XmlInferredTablePlan confirmedPlan = ConfirmConversionPlan(preview, confirmation);
@@ -283,7 +289,7 @@ public sealed class XmlToCsvConverter : IDisposable
         ThrowIfInvalid(validator.ValidateTablePlan(confirmedPlan, limits));
         ThrowIfInvalid(validator.ValidateExecution(timer.Elapsed, limits));
 
-        var sampleState = new InferredTableSampleState(confirmedPlan, maximumRowsPerTable);
+        var sampleState = new InferredTableSampleState(confirmedPlan, maximumRowsPerTable, maximumCharactersPerValue);
         ReadInferredTableRows(xmlSourceFilePath, confirmedPlan, limits, timer, sampleState);
 
         ThrowIfInvalid(validator.ValidateExecution(timer.Elapsed, limits));
@@ -990,14 +996,16 @@ public sealed class XmlToCsvConverter : IDisposable
         private readonly Dictionary<string, List<XmlSampleRow>> _rowsByTablePath;
         private readonly Dictionary<string, int> _targetRowsByTablePath;
         private readonly Dictionary<string, XmlInferredTable> _tablesByPath;
+        private readonly int _maximumCharactersPerValue;
 
-        public InferredTableSampleState(XmlInferredTablePlan plan, int maximumRowsPerTable)
+        public InferredTableSampleState(XmlInferredTablePlan plan, int maximumRowsPerTable, int maximumCharactersPerValue)
         {
             _includeParentRowIdByTablePath = new Dictionary<string, bool>();
             _rowIdsByTablePath = new Dictionary<string, long>();
             _rowsByTablePath = new Dictionary<string, List<XmlSampleRow>>();
             _targetRowsByTablePath = new Dictionary<string, int>();
             _tablesByPath = plan.Tables.ToDictionary(table => table.Path);
+            _maximumCharactersPerValue = maximumCharactersPerValue;
 
             var childTablePaths = new HashSet<string>(plan.Tables.SelectMany(table => table.ChildTables.Select(child => child.Path)));
 
@@ -1035,20 +1043,30 @@ public sealed class XmlToCsvConverter : IDisposable
                 return;
             }
 
-            var rowValues = new List<string> { NormalizeCsvValue(rowId) };
+            var rowValues = new List<XmlSampleValue> { CreateSampleValue(rowId) };
 
             if (_includeParentRowIdByTablePath[table.Path])
             {
-                rowValues.Add(NormalizeCsvValue(parentRowId));
+                rowValues.Add(CreateSampleValue(parentRowId));
             }
 
             foreach (XmlInferredColumn column in table.Columns)
             {
                 values.TryGetValue(column.Path, out string value);
-                rowValues.Add(NormalizeCsvValue(value));
+                rowValues.Add(CreateSampleValue(value));
             }
 
             rows.Add(new XmlSampleRow(rowValues));
+        }
+
+        private XmlSampleValue CreateSampleValue(string value)
+        {
+            string normalizedValue = NormalizeCsvValue(value);
+            bool isTruncated = normalizedValue.Length > _maximumCharactersPerValue;
+            string sampledValue = isTruncated
+                ? normalizedValue.Substring(0, _maximumCharactersPerValue)
+                : normalizedValue;
+            return new XmlSampleValue(sampledValue, isTruncated);
         }
 
         public XmlConversionSample CreateSample(int maximumRowsPerTable)

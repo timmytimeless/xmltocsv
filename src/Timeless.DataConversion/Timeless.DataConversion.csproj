@@ -8,7 +8,7 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <IsPackable>true</IsPackable>
     <PackageId>Timeless.DataConversion</PackageId>
-    <Version>3.3.0</Version>
+    <Version>3.3.1</Version>
     <Authors>Timeless</Authors>
     <Company>Timeless</Company>
     <Description>Convert XML into one or more CSV files with streaming previews, nested table inference, relationship columns, validation, and configurable safety limits.</Description>

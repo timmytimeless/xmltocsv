@@ -34,13 +34,15 @@ public sealed class XmlPublicConversionService
         string xmlSourceFilePath,
         XmlConversionPreview preview,
         XmlConversionPlanConfirmation confirmation,
-        int maximumRowsPerTable = 10)
+        int maximumRowsPerTable = 10,
+        int maximumCharactersPerValue = 500)
     {
         return XmlToCsvConverter.CreateConfirmedConversionSample(
             xmlSourceFilePath,
             preview,
             confirmation,
             maximumRowsPerTable,
+            maximumCharactersPerValue,
             _limits);
     }
 

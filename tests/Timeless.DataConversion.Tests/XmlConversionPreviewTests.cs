@@ -144,13 +144,14 @@ namespace Timeless.DataConversion.Tests
                 preview,
                 confirmation,
                 2,
+                500,
                 new XmlConversionLimits());
 
             XmlTableSample orders = sample.Tables.Single(table => table.Path == "/orders/order");
             XmlTableSample items = sample.Tables.Single(table => table.Path == "/orders/order/items/item");
 
             Assert.That(orders.Columns, Is.EqualTo(new[] { "_row_id", "id", "number" }));
-            Assert.That(orders.Rows.Select(row => row.Values), Is.EqualTo(new[]
+            Assert.That(orders.Rows.Select(row => row.Values.Select(value => value.Value)), Is.EqualTo(new[]
             {
                 new[] { "1", "100", "Line 1\\nLine 2" },
                 new[] { "2", "101", "101" }
@@ -158,7 +159,7 @@ namespace Timeless.DataConversion.Tests
             Assert.That(orders.IsTruncated, Is.False);
 
             Assert.That(items.Columns, Is.EqualTo(new[] { "_row_id", "_parent_row_id", "sku", "quantity" }));
-            Assert.That(items.Rows.Select(row => row.Values), Is.EqualTo(new[]
+            Assert.That(items.Rows.Select(row => row.Values.Select(value => value.Value)), Is.EqualTo(new[]
             {
                 new[] { "1", "1", "A,\"B\"", "2" },
                 new[] { "2", "1", "C", "3" }
@@ -181,6 +182,7 @@ namespace Timeless.DataConversion.Tests
                 preview,
                 confirmation,
                 1,
+                500,
                 new XmlConversionLimits());
 
             XmlTableSample orders = sample.Tables.Single(table => table.Path == "/orders/order");
@@ -194,7 +196,22 @@ namespace Timeless.DataConversion.Tests
                     preview,
                     confirmation,
                     0,
+                    500,
                     new XmlConversionLimits()));
+
+            XmlConversionSample truncatedSample = XmlToCsvConverter.CreateConfirmedConversionSample(
+                xmlPath,
+                preview,
+                confirmation,
+                1,
+                2,
+                new XmlConversionLimits());
+            XmlSampleValue truncatedOrderId = truncatedSample.Tables
+                .Single(table => table.Path == "/orders/order")
+                .Rows[0]
+                .Values[1];
+            Assert.That(truncatedOrderId.Value, Is.EqualTo("10"));
+            Assert.That(truncatedOrderId.IsTruncated, Is.True);
         }
 
         private static string WriteOrdersXml()

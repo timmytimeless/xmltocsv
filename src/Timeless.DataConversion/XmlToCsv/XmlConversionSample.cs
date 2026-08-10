@@ -42,10 +42,22 @@ public sealed class XmlTableSample
 
 public sealed class XmlSampleRow
 {
-    public XmlSampleRow(IEnumerable<string> values)
+    public XmlSampleRow(IEnumerable<XmlSampleValue> values)
     {
-        Values = (values ?? Array.Empty<string>()).ToArray();
+        Values = (values ?? Array.Empty<XmlSampleValue>()).ToArray();
     }
 
-    public IReadOnlyList<string> Values { get; }
+    public IReadOnlyList<XmlSampleValue> Values { get; }
+}
+
+public sealed class XmlSampleValue
+{
+    public XmlSampleValue(string value, bool isTruncated)
+    {
+        Value = value ?? string.Empty;
+        IsTruncated = isTruncated;
+    }
+
+    public string Value { get; }
+    public bool IsTruncated { get; }
 }
