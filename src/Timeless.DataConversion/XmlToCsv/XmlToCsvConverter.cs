@@ -263,6 +263,33 @@ public sealed class XmlToCsvConverter : IDisposable
         ExportInferredTables(xmlSourceFilePath, destinationDirectory, encoding, confirmedPlan, limits);
     }
 
+    public static XmlConversionSample CreateConfirmedConversionSample(
+        string xmlSourceFilePath,
+        XmlConversionPreview preview,
+        XmlConversionPlanConfirmation confirmation,
+        int maximumRowsPerTable,
+        XmlConversionLimits limits)
+    {
+        if (maximumRowsPerTable <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maximumRowsPerTable));
+        }
+
+        XmlInferredTablePlan confirmedPlan = ConfirmConversionPlan(preview, confirmation);
+        var timer = Stopwatch.StartNew();
+        var validator = new XmlConversionValidator();
+
+        ThrowIfInvalid(validator.ValidateSourceFile(xmlSourceFilePath, limits));
+        ThrowIfInvalid(validator.ValidateTablePlan(confirmedPlan, limits));
+        ThrowIfInvalid(validator.ValidateExecution(timer.Elapsed, limits));
+
+        var sampleState = new InferredTableSampleState(confirmedPlan, maximumRowsPerTable);
+        ReadInferredTableRows(xmlSourceFilePath, confirmedPlan, limits, timer, sampleState);
+
+        ThrowIfInvalid(validator.ValidateExecution(timer.Elapsed, limits));
+        return sampleState.CreateSample(maximumRowsPerTable);
+    }
+
     public static void ExportInferredTables(string xmlSourceFilePath, string destinationDirectory, Encoding encoding, XmlInferredTablePlan plan)
     {
         ExportInferredTables(xmlSourceFilePath, destinationDirectory, encoding, plan, null, null);
@@ -288,73 +315,80 @@ public sealed class XmlToCsvConverter : IDisposable
 
         Directory.CreateDirectory(destinationDirectory);
 
-        var exportState = new InferredTableExportState(plan, destinationDirectory, encoding);
+        using var exportState = new InferredTableExportState(plan, destinationDirectory, encoding);
+        ReadInferredTableRows(xmlSourceFilePath, plan, limits, timer, exportState);
+    }
 
-        try
+    private static void ReadInferredTableRows(
+        string xmlSourceFilePath,
+        XmlInferredTablePlan plan,
+        XmlConversionLimits limits,
+        Stopwatch timer,
+        IInferredTableRowSink rowSink)
+    {
+        if (plan == null)
         {
-            using XmlReader reader = XmlReader.Create(xmlSourceFilePath, CreateStreamingReaderSettings());
-            var frameStack = new Stack<StreamingElementFrame>();
+            throw new ArgumentNullException(nameof(plan));
+        }
 
-            while (!reader.EOF)
+        using XmlReader reader = XmlReader.Create(xmlSourceFilePath, CreateStreamingReaderSettings());
+        var frameStack = new Stack<StreamingElementFrame>();
+
+        while (!reader.EOF && !rowSink.IsComplete)
+        {
+            ThrowIfExecutionLimitExceeded(timer, limits);
+
+            if (reader.NodeType == XmlNodeType.None)
             {
-                ThrowIfExecutionLimitExceeded(timer, limits);
-
-                if (reader.NodeType == XmlNodeType.None)
+                if (!reader.Read())
                 {
-                    if (!reader.Read())
-                    {
-                        break;
-                    }
-
-                    continue;
+                    break;
                 }
 
-                if (reader.NodeType != XmlNodeType.Element)
+                continue;
+            }
+
+            if (reader.NodeType != XmlNodeType.Element)
+            {
+                if (reader.NodeType == XmlNodeType.Text ||
+                    reader.NodeType == XmlNodeType.CDATA ||
+                    reader.NodeType == XmlNodeType.SignificantWhitespace)
                 {
-                    if (reader.NodeType == XmlNodeType.Text ||
-                        reader.NodeType == XmlNodeType.CDATA ||
-                        reader.NodeType == XmlNodeType.SignificantWhitespace)
+                    if (frameStack.Count > 0)
                     {
-                        if (frameStack.Count > 0)
-                        {
-                            frameStack.Peek().Text.Append(reader.Value);
-                        }
+                        frameStack.Peek().Text.Append(reader.Value);
                     }
-                    else if (reader.NodeType == XmlNodeType.EndElement && frameStack.Count > 0)
-                    {
-                        CompleteStreamingElement(frameStack, exportState, limits);
-                    }
-
-                    if (!reader.Read())
-                    {
-                        break;
-                    }
-
-                    continue;
                 }
-
-                string parentPath = frameStack.Count == 0 ? null : frameStack.Peek().Path;
-                string path = BuildXmlPath(parentPath, reader.LocalName);
-                StreamingElementFrame frame = CreateStreamingElementFrame(reader, path, frameStack, exportState, limits);
-
-                if (reader.IsEmptyElement)
+                else if (reader.NodeType == XmlNodeType.EndElement && frameStack.Count > 0)
                 {
-                    CompleteStreamingElement(frame, frameStack, exportState, limits);
-                }
-                else
-                {
-                    frameStack.Push(frame);
+                    CompleteStreamingElement(frameStack, rowSink, limits);
                 }
 
                 if (!reader.Read())
                 {
                     break;
                 }
+
+                continue;
             }
-        }
-        finally
-        {
-            exportState.Dispose();
+
+            string parentPath = frameStack.Count == 0 ? null : frameStack.Peek().Path;
+            string path = BuildXmlPath(parentPath, reader.LocalName);
+            StreamingElementFrame frame = CreateStreamingElementFrame(reader, path, frameStack, rowSink, limits);
+
+            if (reader.IsEmptyElement)
+            {
+                CompleteStreamingElement(frame, frameStack, rowSink, limits);
+            }
+            else
+            {
+                frameStack.Push(frame);
+            }
+
+            if (!reader.Read())
+            {
+                break;
+            }
         }
     }
 
@@ -451,7 +485,7 @@ public sealed class XmlToCsvConverter : IDisposable
         XmlReader reader,
         string path,
         Stack<StreamingElementFrame> frameStack,
-        InferredTableExportState exportState,
+        IInferredTableRowSink rowSink,
         XmlConversionLimits limits)
     {
         if (frameStack.Count > 0)
@@ -460,8 +494,8 @@ public sealed class XmlToCsvConverter : IDisposable
         }
 
         StreamingElementFrame parentTableFrame = frameStack.FirstOrDefault(item => item.Table != null);
-        XmlInferredTable table = exportState.GetTable(path);
-        string rowId = table == null ? null : exportState.ReserveRowId(table);
+        XmlInferredTable table = rowSink.GetTable(path);
+        string rowId = table == null ? null : rowSink.ReserveRowId(table);
         var frame = new StreamingElementFrame(path, table, rowId, parentTableFrame?.RowId);
 
         if (reader.HasAttributes)
@@ -480,17 +514,17 @@ public sealed class XmlToCsvConverter : IDisposable
 
     private static void CompleteStreamingElement(
         Stack<StreamingElementFrame> frameStack,
-        InferredTableExportState exportState,
+        IInferredTableRowSink rowSink,
         XmlConversionLimits limits)
     {
         StreamingElementFrame frame = frameStack.Pop();
-        CompleteStreamingElement(frame, frameStack, exportState, limits);
+        CompleteStreamingElement(frame, frameStack, rowSink, limits);
     }
 
     private static void CompleteStreamingElement(
         StreamingElementFrame frame,
         Stack<StreamingElementFrame> frameStack,
-        InferredTableExportState exportState,
+        IInferredTableRowSink rowSink,
         XmlConversionLimits limits)
     {
         if (!frame.HasChildElements)
@@ -500,7 +534,7 @@ public sealed class XmlToCsvConverter : IDisposable
 
         if (frame.Table != null)
         {
-            exportState.WriteRow(frame.Table, frame.RowId, frame.ParentRowId, frame.Values);
+            rowSink.WriteRow(frame.Table, frame.RowId, frame.ParentRowId, frame.Values);
         }
     }
 
@@ -778,24 +812,13 @@ public sealed class XmlToCsvConverter : IDisposable
 
     private static void WriteEscapedCsvValue(TextWriter writer, string value)
     {
-        for (int i = 0; i < value.Length; i++)
+        string normalizedValue = NormalizeCsvValue(value);
+
+        for (int i = 0; i < normalizedValue.Length; i++)
         {
-            char current = value[i];
+            char current = normalizedValue[i];
 
-            if (current == '\r')
-            {
-                writer.Write(@"\n");
-
-                if (i + 1 < value.Length && value[i + 1] == '\n')
-                {
-                    i++;
-                }
-            }
-            else if (current == '\n')
-            {
-                writer.Write(@"\n");
-            }
-            else if (current == '"')
+            if (current == '"')
             {
                 writer.Write("\"\"");
             }
@@ -878,7 +901,15 @@ public sealed class XmlToCsvConverter : IDisposable
         private long RowValueBytes { get; set; }
     }
 
-    private sealed class InferredTableExportState : IDisposable
+    private interface IInferredTableRowSink
+    {
+        bool IsComplete { get; }
+        XmlInferredTable GetTable(string path);
+        string ReserveRowId(XmlInferredTable table);
+        void WriteRow(XmlInferredTable table, string rowId, string parentRowId, IReadOnlyDictionary<string, string> values);
+    }
+
+    private sealed class InferredTableExportState : IInferredTableRowSink, IDisposable
     {
         private readonly Dictionary<string, StreamWriter> _writers;
         private readonly Dictionary<string, long> _rowIdsByTablePath;
@@ -914,6 +945,8 @@ public sealed class XmlToCsvConverter : IDisposable
             return table;
         }
 
+        public bool IsComplete => false;
+
         public string ReserveRowId(XmlInferredTable table)
         {
             long nextId = _rowIdsByTablePath[table.Path] + 1;
@@ -948,6 +981,126 @@ public sealed class XmlToCsvConverter : IDisposable
                 writer.Dispose();
             }
         }
+    }
+
+    private sealed class InferredTableSampleState : IInferredTableRowSink
+    {
+        private readonly Dictionary<string, bool> _includeParentRowIdByTablePath;
+        private readonly Dictionary<string, long> _rowIdsByTablePath;
+        private readonly Dictionary<string, List<XmlSampleRow>> _rowsByTablePath;
+        private readonly Dictionary<string, int> _targetRowsByTablePath;
+        private readonly Dictionary<string, XmlInferredTable> _tablesByPath;
+
+        public InferredTableSampleState(XmlInferredTablePlan plan, int maximumRowsPerTable)
+        {
+            _includeParentRowIdByTablePath = new Dictionary<string, bool>();
+            _rowIdsByTablePath = new Dictionary<string, long>();
+            _rowsByTablePath = new Dictionary<string, List<XmlSampleRow>>();
+            _targetRowsByTablePath = new Dictionary<string, int>();
+            _tablesByPath = plan.Tables.ToDictionary(table => table.Path);
+
+            var childTablePaths = new HashSet<string>(plan.Tables.SelectMany(table => table.ChildTables.Select(child => child.Path)));
+
+            foreach (XmlInferredTable table in plan.Tables)
+            {
+                _includeParentRowIdByTablePath[table.Path] = childTablePaths.Contains(table.Path);
+                _rowIdsByTablePath[table.Path] = 0;
+                _rowsByTablePath[table.Path] = new List<XmlSampleRow>();
+                _targetRowsByTablePath[table.Path] = (int)Math.Min(table.RowCount, maximumRowsPerTable);
+            }
+        }
+
+        public bool IsComplete => _tablesByPath.Count == 0 ||
+            _tablesByPath.Keys.All(path => _rowsByTablePath[path].Count >= _targetRowsByTablePath[path]);
+
+        public XmlInferredTable GetTable(string path)
+        {
+            _tablesByPath.TryGetValue(path, out XmlInferredTable table);
+            return table;
+        }
+
+        public string ReserveRowId(XmlInferredTable table)
+        {
+            long nextId = _rowIdsByTablePath[table.Path] + 1;
+            _rowIdsByTablePath[table.Path] = nextId;
+            return nextId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        public void WriteRow(XmlInferredTable table, string rowId, string parentRowId, IReadOnlyDictionary<string, string> values)
+        {
+            List<XmlSampleRow> rows = _rowsByTablePath[table.Path];
+
+            if (rows.Count >= _targetRowsByTablePath[table.Path])
+            {
+                return;
+            }
+
+            var rowValues = new List<string> { NormalizeCsvValue(rowId) };
+
+            if (_includeParentRowIdByTablePath[table.Path])
+            {
+                rowValues.Add(NormalizeCsvValue(parentRowId));
+            }
+
+            foreach (XmlInferredColumn column in table.Columns)
+            {
+                values.TryGetValue(column.Path, out string value);
+                rowValues.Add(NormalizeCsvValue(value));
+            }
+
+            rows.Add(new XmlSampleRow(rowValues));
+        }
+
+        public XmlConversionSample CreateSample(int maximumRowsPerTable)
+        {
+            return new XmlConversionSample(_tablesByPath.Values.Select(table =>
+            {
+                var columns = new List<string> { "_row_id" };
+
+                if (_includeParentRowIdByTablePath[table.Path])
+                {
+                    columns.Add("_parent_row_id");
+                }
+
+                columns.AddRange(table.Columns.Select(column => column.Name));
+                return new XmlTableSample(table.Path, table.Name, table.RowCount, columns, _rowsByTablePath[table.Path]);
+            }), maximumRowsPerTable);
+        }
+    }
+
+    private static string NormalizeCsvValue(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return string.Empty;
+        }
+
+        using var writer = new StringWriter(System.Globalization.CultureInfo.InvariantCulture);
+
+        for (int i = 0; i < value.Length; i++)
+        {
+            char current = value[i];
+
+            if (current == '\r')
+            {
+                writer.Write(@"\n");
+
+                if (i + 1 < value.Length && value[i + 1] == '\n')
+                {
+                    i++;
+                }
+            }
+            else if (current == '\n')
+            {
+                writer.Write(@"\n");
+            }
+            else
+            {
+                writer.Write(current);
+            }
+        }
+
+        return writer.ToString();
     }
 
     public void Dispose()

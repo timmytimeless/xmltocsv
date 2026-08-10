@@ -127,6 +127,76 @@ namespace Timeless.DataConversion.Tests
                 "\"3\",\"202\",\"202\"" + System.Environment.NewLine));
         }
 
+        [Test]
+        public void CreateConfirmedConversionSampleMatchesExportedValuesAndRelationships()
+        {
+            string xmlPath = WriteTempXml(
+                "<?xml version=\"1.0\"?>" +
+                "<orders>" +
+                "<order id=\"100\"><number>Line 1\nLine 2</number><items><item sku=\"A,&quot;B&quot;\"><quantity>2</quantity></item><item sku=\"C\"><quantity>3</quantity></item></items></order>" +
+                "<order id=\"101\"><number>101</number><items><item sku=\"D\"><quantity>4</quantity></item></items></order>" +
+                "</orders>");
+            XmlConversionPreview preview = XmlToCsvConverter.CreateConversionPreview(xmlPath);
+            XmlConversionPlanConfirmation confirmation = XmlConversionPlanConfirmation.IncludeAll(preview);
+
+            XmlConversionSample sample = XmlToCsvConverter.CreateConfirmedConversionSample(
+                xmlPath,
+                preview,
+                confirmation,
+                2,
+                new XmlConversionLimits());
+
+            XmlTableSample orders = sample.Tables.Single(table => table.Path == "/orders/order");
+            XmlTableSample items = sample.Tables.Single(table => table.Path == "/orders/order/items/item");
+
+            Assert.That(orders.Columns, Is.EqualTo(new[] { "_row_id", "id", "number" }));
+            Assert.That(orders.Rows.Select(row => row.Values), Is.EqualTo(new[]
+            {
+                new[] { "1", "100", "Line 1\\nLine 2" },
+                new[] { "2", "101", "101" }
+            }));
+            Assert.That(orders.IsTruncated, Is.False);
+
+            Assert.That(items.Columns, Is.EqualTo(new[] { "_row_id", "_parent_row_id", "sku", "quantity" }));
+            Assert.That(items.Rows.Select(row => row.Values), Is.EqualTo(new[]
+            {
+                new[] { "1", "1", "A,\"B\"", "2" },
+                new[] { "2", "1", "C", "3" }
+            }));
+            Assert.That(items.IsTruncated, Is.True);
+        }
+
+        [Test]
+        public void CreateConfirmedConversionSampleUsesConfirmedNamesAndRejectsInvalidRowLimit()
+        {
+            string xmlPath = WriteOrdersXml();
+            XmlConversionPreview preview = XmlToCsvConverter.CreateConversionPreview(xmlPath);
+            XmlConversionPlanConfirmation confirmation = XmlConversionPlanConfirmation.IncludeAll(preview);
+            XmlTablePlanConfirmation orderTable = confirmation.Tables.Single(table => table.Path == "/orders/order");
+            orderTable.Name = "orders";
+            orderTable.Columns.Single(column => column.Path == "/orders/order/@id").Name = "order_id";
+
+            XmlConversionSample sample = XmlToCsvConverter.CreateConfirmedConversionSample(
+                xmlPath,
+                preview,
+                confirmation,
+                1,
+                new XmlConversionLimits());
+
+            XmlTableSample orders = sample.Tables.Single(table => table.Path == "/orders/order");
+            Assert.That(orders.Name, Is.EqualTo("orders"));
+            Assert.That(orders.Columns, Is.EqualTo(new[] { "_row_id", "order_id", "number" }));
+            Assert.That(orders.Rows, Has.Count.EqualTo(1));
+
+            Assert.Throws<System.ArgumentOutOfRangeException>(() =>
+                XmlToCsvConverter.CreateConfirmedConversionSample(
+                    xmlPath,
+                    preview,
+                    confirmation,
+                    0,
+                    new XmlConversionLimits()));
+        }
+
         private static string WriteOrdersXml()
         {
             return WriteTempXml(

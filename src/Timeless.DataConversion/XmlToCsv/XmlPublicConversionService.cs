@@ -30,6 +30,20 @@ public sealed class XmlPublicConversionService
         return plan;
     }
 
+    public XmlConversionSample CreateSample(
+        string xmlSourceFilePath,
+        XmlConversionPreview preview,
+        XmlConversionPlanConfirmation confirmation,
+        int maximumRowsPerTable = 10)
+    {
+        return XmlToCsvConverter.CreateConfirmedConversionSample(
+            xmlSourceFilePath,
+            preview,
+            confirmation,
+            maximumRowsPerTable,
+            _limits);
+    }
+
     public void ExportConfirmedConversion(
         string xmlSourceFilePath,
         string destinationDirectory,

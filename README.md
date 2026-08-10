@@ -31,6 +31,7 @@ The public conversion path profiles XML with `XmlReader`, infers candidate table
 - Infers candidate parent and child tables from repeated XML paths.
 - Scores inferred tables with repeated-path, leaf-column, row-count, and structural-signature signals.
 - Creates conversion previews with tables, columns, child table relationships, inference scores, reasons, and warnings.
+- Creates bounded sample rows from the same streaming table mapping and value normalization used by final exports.
 - Allows callers to confirm, exclude, and rename inferred tables and columns before export.
 - Exports inferred nested tables with `_row_id` and `_parent_row_id` columns.
 - Exports confirmed conversions to a zip archive.
@@ -130,6 +131,13 @@ For nested or arbitrary XML, use the preview-driven APIs:
 XmlConversionPreview preview = XmlToCsvConverter.CreateConversionPreview(@"C:\path\input.xml");
 
 XmlConversionPlanConfirmation confirmation = XmlConversionPlanConfirmation.IncludeAll(preview);
+
+XmlConversionSample sample = XmlToCsvConverter.CreateConfirmedConversionSample(
+    @"C:\path\input.xml",
+    preview,
+    confirmation,
+    maximumRowsPerTable: 10,
+    limits: new XmlConversionLimits());
 
 XmlTablePlanConfirmation firstTable = confirmation.Tables[0];
 firstTable.Name = "orders";
